@@ -7,16 +7,17 @@ Android app for the [pi coding agent](https://github.com/earendil-works/pi), bri
 
 ## Run the server
 
-PC (phone connects over Wi-Fi or Tailscale):
+Needs Node.js 22.19+ and git. One command, on PC or in Termux:
 
-    cd server && npm install && npm run build
-    node bin/pi-app.js            # listens on 0.0.0.0:30141, prints a QR
+    git clone <this repo> pi-app && cd pi-app
+    ./pi-app                      # Windows: pi-app.cmd
 
-Termux (same phone):
+The first run installs dependencies and builds the server (a few minutes); later runs start in seconds and rebuild only after `git pull`. It prints a pairing QR plus the server address and token: open the app, tap Pair, scan.
 
-    pkg install nodejs-lts python make clang git
-    cd server && npm install && npm run build
-    node bin/pi-app.js            # Termux detected: listens on 127.0.0.1 only
+- PC: listens on 0.0.0.0:30141 (Wi-Fi or Tailscale). Tailscale addresses are listed first.
+- Termux: detected automatically, listens on 127.0.0.1 only (`pkg install nodejs-lts git python make clang` first).
+- Want `pi-app` from any folder? Run `npm i -g .` once inside the repo.
+- Options: `--port 4000`, `--local` (loopback only), `--lan` (Termux, expose to LAN).
 
 `pi-app pair` prints the QR again; `pi-app token --rotate` revokes every paired phone.
 Off loopback, the server refuses anyone without the token (or `PI_WEB_PASSWORD`).
