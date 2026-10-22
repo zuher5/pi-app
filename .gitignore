@@ -1,0 +1,6 @@
+node_modules/
+.next/
+dist/
+*.tsbuildinfo
+next-env.d.ts
+mobile/android/app/src/main/assets/public/
