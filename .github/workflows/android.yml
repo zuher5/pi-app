@@ -7,6 +7,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: write   # attach the APK to tagged releases
+
 jobs:
   apk:
     # ubuntu-24.04 ships the Android SDK (ANDROID_HOME); newer images may not.
