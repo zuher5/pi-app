@@ -1,0 +1,5 @@
+#!/bin/sh
+# Pi-App launcher (Linux, macOS, Termux). Usage: ./pi-app [--local|--lan] [-p PORT] | pair | token [--rotate]
+DIR="$(cd "$(dirname "$(readlink -f "$0" 2>/dev/null || echo "$0")")" && pwd)"
+command -v node >/dev/null 2>&1 || { echo "Node.js 22.19+ is required: https://nodejs.org (Termux: pkg install nodejs-lts)"; exit 1; }
+exec node "$DIR/scripts/pi-app.mjs" "$@"

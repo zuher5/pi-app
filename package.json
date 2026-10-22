@@ -1,0 +1,7 @@
+{
+  "name": "pi-app",
+  "private": true,
+  "description": "Pi coding agent on your Android phone. Run `./pi-app` (or `npm i -g .` then `pi-app`).",
+  "bin": { "pi-app": "scripts/pi-app.mjs" },
+  "engines": { "node": ">=22.19.0" }
+}
