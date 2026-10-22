@@ -1,0 +1,152 @@
+/* Catppuccin (Latte light / Mocha dark) mapped onto Material 3 colour roles. */
+@import "@fontsource/roboto/latin-400.css";
+@import "@fontsource/roboto/latin-500.css";
+@import "@fontsource/roboto/latin-700.css";
+@import "@fontsource/roboto-mono/latin-400.css";
+@import "@fontsource/roboto-mono/latin-500.css";
+
+:root {
+  color-scheme: light;
+  --ctp-rosewater: #dc8a78; --ctp-flamingo: #dd7878; --ctp-pink: #ea76cb; --ctp-mauve: #8839ef;
+  --ctp-red: #d20f39; --ctp-maroon: #e64553; --ctp-peach: #fe640b; --ctp-yellow: #df8e1d;
+  --ctp-green: #40a02b; --ctp-teal: #179299; --ctp-sky: #04a5e5; --ctp-sapphire: #209fb5;
+  --ctp-blue: #1e66f5; --ctp-lavender: #7287fd;
+  --ctp-text: #4c4f69; --ctp-subtext1: #5c5f77; --ctp-subtext0: #6c6f85;
+  --ctp-overlay2: #7c7f93; --ctp-overlay1: #8c8fa1; --ctp-overlay0: #9ca0b0;
+  --ctp-surface2: #acb0be; --ctp-surface1: #bcc0cc; --ctp-surface0: #ccd0da;
+  --ctp-base: #eff1f5; --ctp-mantle: #e6e9ef; --ctp-crust: #dce0e8;
+
+  --md-primary: var(--ctp-mauve);
+  --md-on-primary: #ffffff;
+  --md-primary-container: color-mix(in oklab, var(--ctp-mauve) 16%, var(--ctp-base));
+  --md-on-primary-container: color-mix(in oklab, var(--ctp-mauve) 70%, var(--ctp-text));
+  --md-secondary-container: color-mix(in oklab, var(--ctp-lavender) 20%, var(--ctp-base));
+  --md-on-secondary-container: var(--ctp-text);
+  --md-surface: var(--ctp-base);
+  --md-surface-container-low: color-mix(in oklab, var(--ctp-mantle) 60%, var(--ctp-base));
+  --md-surface-container: var(--ctp-mantle);
+  --md-surface-container-high: var(--ctp-crust);
+  --md-surface-container-highest: var(--ctp-surface0);
+  --md-on-surface: var(--ctp-text);
+  --md-on-surface-variant: var(--ctp-subtext0);
+  --md-outline: var(--ctp-overlay0);
+  --md-outline-variant: var(--ctp-surface1);
+  --md-error: var(--ctp-red);
+  --md-on-error: #ffffff;
+  --md-error-container: color-mix(in oklab, var(--ctp-red) 12%, var(--ctp-base));
+  --md-success: var(--ctp-green);
+  --md-warning: var(--ctp-yellow);
+  --md-code-bg: var(--ctp-mantle);
+  --md-scrim: rgb(17 17 27 / 0.4);
+  --md-shadow: 0 1px 2px rgb(76 79 105 / 0.12), 0 2px 8px rgb(76 79 105 / 0.08);
+
+  --font-sans: "Roboto", system-ui, sans-serif;
+  --font-mono: "Roboto Mono", ui-monospace, monospace;
+  --ease-emph: cubic-bezier(0.2, 0, 0, 1);
+  --ease-decel: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --dur-short: 150ms; --dur-med: 300ms;
+  --radius-s: 8px; --radius-m: 12px; --radius-l: 16px; --radius-xl: 28px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ctp-rosewater: #f5e0dc; --ctp-flamingo: #f2cdcd; --ctp-pink: #f5c2e7; --ctp-mauve: #cba6f7;
+  --ctp-red: #f38ba8; --ctp-maroon: #eba0ac; --ctp-peach: #fab387; --ctp-yellow: #f9e2af;
+  --ctp-green: #a6e3a1; --ctp-teal: #94e2d5; --ctp-sky: #89dceb; --ctp-sapphire: #74c7ec;
+  --ctp-blue: #89b4fa; --ctp-lavender: #b4befe;
+  --ctp-text: #cdd6f4; --ctp-subtext1: #bac2de; --ctp-subtext0: #a6adc8;
+  --ctp-overlay2: #9399b2; --ctp-overlay1: #7f849c; --ctp-overlay0: #6c7086;
+  --ctp-surface2: #585b70; --ctp-surface1: #45475a; --ctp-surface0: #313244;
+  --ctp-base: #1e1e2e; --ctp-mantle: #181825; --ctp-crust: #11111b;
+
+  --md-on-primary: var(--ctp-crust);
+  --md-primary-container: color-mix(in oklab, var(--ctp-mauve) 22%, var(--ctp-base));
+  --md-on-primary-container: color-mix(in oklab, var(--ctp-mauve) 60%, var(--ctp-text));
+  --md-secondary-container: color-mix(in oklab, var(--ctp-lavender) 18%, var(--ctp-surface0));
+  --md-surface-container-low: var(--ctp-mantle);
+  --md-surface-container: color-mix(in oklab, var(--ctp-surface0) 55%, var(--ctp-base));
+  --md-surface-container-high: var(--ctp-surface0);
+  --md-surface-container-highest: var(--ctp-surface1);
+  --md-outline: var(--ctp-overlay1);
+  --md-outline-variant: var(--ctp-surface1);
+  --md-on-error: var(--ctp-crust);
+  --md-error-container: color-mix(in oklab, var(--ctp-red) 16%, var(--ctp-base));
+  --md-code-bg: var(--ctp-crust);
+  --md-scrim: rgb(0 0 0 / 0.5);
+  --md-shadow: 0 1px 3px rgb(0 0 0 / 0.4), 0 4px 12px rgb(0 0 0 / 0.25);
+}
+
+/* M3 type scale in rem, so the system font scale (WebView textZoom) applies. */
+.display-s { font: 400 2.25rem/2.75rem var(--font-sans); letter-spacing: -0.01em; }
+.headline-s { font: 400 1.5rem/2rem var(--font-sans); }
+.title-l { font: 400 1.375rem/1.75rem var(--font-sans); }
+.title-m { font: 500 1rem/1.5rem var(--font-sans); letter-spacing: 0.009em; }
+.title-s { font: 500 0.875rem/1.25rem var(--font-sans); letter-spacing: 0.006em; }
+.body-l { font: 400 1rem/1.5rem var(--font-sans); }
+.body-m { font: 400 0.875rem/1.25rem var(--font-sans); letter-spacing: 0.016em; }
+.body-s { font: 400 0.75rem/1rem var(--font-sans); letter-spacing: 0.025em; }
+.label-l { font: 500 0.875rem/1.25rem var(--font-sans); letter-spacing: 0.006em; }
+.label-m { font: 500 0.75rem/1rem var(--font-sans); letter-spacing: 0.03em; }
+.label-s { font: 500 0.6875rem/1rem var(--font-sans); letter-spacing: 0.03em; }
+.serial { font-family: var(--font-mono); font-variant-numeric: tabular-nums slashed-zero; letter-spacing: 0.08em; text-transform: uppercase; }
+.tabular { font-variant-numeric: tabular-nums; }
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--md-surface); color: var(--md-on-surface);
+  font: 400 1rem/1.5rem var(--font-sans);
+  -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+#app { height: 100%; }
+::selection { background: color-mix(in oklab, var(--md-primary) 35%, transparent); }
+input, textarea { caret-color: var(--md-primary); }
+:focus-visible { outline: 2px solid var(--md-primary); outline-offset: 2px; border-radius: 4px; }
+button { font: inherit; color: inherit; }
+a { color: var(--md-primary); text-underline-offset: 0.2em; }
+code, pre, kbd { font-family: var(--font-mono); }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-thumb { background: var(--md-outline-variant); border-radius: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* Shared Material-ish controls */
+.btn {
+  min-height: 40px; padding: 0 24px; border-radius: 20px; border: 0; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font: 500 0.875rem/1.25rem var(--font-sans); letter-spacing: 0.006em;
+  position: relative; isolation: isolate; overflow: hidden;
+  transition: box-shadow var(--dur-short) var(--ease-emph);
+}
+.btn::after { content: ""; position: absolute; inset: 0; background: currentColor; opacity: 0; transition: opacity var(--dur-short); z-index: -1; }
+.btn:hover::after { opacity: 0.08; } .btn:active::after { opacity: 0.12; }
+.btn:disabled { opacity: 0.38; cursor: default; }
+.btn-filled { background: var(--md-primary); color: var(--md-on-primary); }
+.btn-tonal { background: var(--md-secondary-container); color: var(--md-on-secondary-container); }
+.btn-outlined { background: transparent; color: var(--md-primary); box-shadow: inset 0 0 0 1px var(--md-outline); }
+.btn-text { background: transparent; color: var(--md-primary); padding: 0 12px; }
+.btn-error { background: var(--md-error); color: var(--md-on-error); }
+.touch { min-width: 48px; min-height: 48px; }
+.icon-btn {
+  width: 48px; height: 48px; border: 0; background: transparent; border-radius: 50%;
+  display: inline-grid; place-items: center; cursor: pointer; color: var(--md-on-surface-variant);
+  position: relative; flex: none;
+}
+.icon-btn::before { content: ""; position: absolute; inset: 4px; border-radius: 50%; background: currentColor; opacity: 0; transition: opacity var(--dur-short); }
+.icon-btn:hover::before { opacity: 0.08; } .icon-btn:active::before { opacity: 0.12; }
+.icon-btn:disabled { opacity: 0.38; }
+.field { display: grid; gap: 4px; }
+.field label { color: var(--md-on-surface-variant); }
+.field input, .field textarea, .field select {
+  min-height: 56px; padding: 16px; border-radius: 4px; border: 1px solid var(--md-outline);
+  background: transparent; color: var(--md-on-surface); font: 400 1rem/1.5rem var(--font-sans);
+}
+.field input:focus, .field textarea:focus, .field select:focus { outline: none; border: 2px solid var(--md-primary); padding: 15px; }
+.field .hint { color: var(--md-on-surface-variant); }
+.field .err { color: var(--md-error); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

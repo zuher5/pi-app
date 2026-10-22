@@ -1,0 +1,31 @@
+<script lang="ts">
+  import type { Snippet } from "svelte";
+  import Icon from "./Icon.svelte";
+  import { iBack } from "../icons";
+  let { title, subtitle, onback, actions, lead }: { title: string; subtitle?: string; onback?: () => void; actions?: Snippet; lead?: Snippet } = $props();
+</script>
+
+<header class="bar">
+  {#if onback}
+    <button class="icon-btn" onclick={onback} aria-label="Back"><Icon path={iBack} /></button>
+  {/if}
+  {@render lead?.()}
+  <div class="titles">
+    <h1 class="title-l">{title}</h1>
+    {#if subtitle}<p class="body-s sub">{subtitle}</p>{/if}
+  </div>
+  <div class="actions">{@render actions?.()}</div>
+</header>
+
+<style>
+  .bar {
+    display: flex; align-items: center; gap: 4px; min-height: 64px;
+    padding: calc(var(--safe-top) + 8px) 4px 8px 4px; background: var(--md-surface);
+    position: sticky; top: 0; z-index: 5;
+  }
+  .bar:not(:has(.icon-btn:first-child)) .titles { padding-left: 12px; }
+  .titles { flex: 1; min-width: 0; }
+  h1 { margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sub { margin: 0; color: var(--md-on-surface-variant); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .actions { display: flex; align-items: center; gap: 4px; padding-right: 4px; }
+</style>
