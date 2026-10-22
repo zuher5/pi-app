@@ -9,11 +9,12 @@ on:
 
 jobs:
   apk:
-    runs-on: ubuntu-latest
+    # ubuntu-24.04 ships the Android SDK (ANDROID_HOME); newer images may not.
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -21,13 +22,14 @@ jobs:
             mobile/package-lock.json
             server/package-lock.json
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
           cache: gradle
 
-      - uses: android-actions/setup-android@v3
+      - name: Android SDK packages
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;35.0.0" > /dev/null
 
       # The mobile app reuses client-safe modules from server/lib (@pi alias).
       - name: Install server deps

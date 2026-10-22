@@ -109,6 +109,9 @@ function startServer({ port, hostname, openBrowser }) {
       console.warn(
         `Warning: pi-web is listening on ${hostname} with password authentication over HTTP. Use HTTPS or a trusted VPN to protect the password in transit.`,
       );
+    } else if (process.env.PI_APP_REQUIRE_TOKEN === "1") {
+      // Pi-App: the pairing token guards every request off loopback.
+      console.warn(`Note: listening on ${hostname}; every request needs the pairing token. Plain HTTP: prefer your own Wi-Fi or Tailscale.`);
     } else {
       console.warn(
         `Warning: pi-web is listening on ${hostname} without authentication. Only use this on a trusted network.`,
