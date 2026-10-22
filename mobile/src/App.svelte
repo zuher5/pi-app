@@ -6,14 +6,13 @@
   import Sessions from "$lib/screens/Sessions.svelte";
   import Chat from "$lib/screens/Chat.svelte";
   import Settings from "$lib/screens/Settings.svelte";
-  import Soon from "$lib/screens/Soon.svelte";
+  import Files from "$lib/screens/Files.svelte";
+  import Overlays from "$lib/components/Overlays.svelte";
   import NewSession from "$lib/screens/NewSession.svelte";
   import Rosette from "$lib/components/Rosette.svelte";
-  import { iFiles, iTerminal } from "$lib/icons";
-  import { t } from "$lib/i18n.svelte";
   import { conn, restoreConnection } from "$lib/store/connection.svelte";
   import { live } from "$lib/store/session.svelte";
-  import { nav } from "$lib/nav.svelte";
+  import { nav, runBack } from "$lib/nav.svelte";
 
   let pairLink = $state("");
 
@@ -25,6 +24,7 @@
       // System Back: close the sheet, then return to Sessions, then leave the app.
       subs.push(CapApp.addListener("backButton", () => {
         if (nav.sheet) nav.sheet = null;
+        else if (runBack()) return;
         else if (conn.current && nav.tab !== "sessions") nav.tab = "sessions";
         else void CapApp.exitApp();
       }));
@@ -53,12 +53,13 @@
     <div class="content">
       {#if nav.tab === "sessions"}<Sessions />
       {:else if nav.tab === "chat"}<Chat />
-      {:else if nav.tab === "files"}<Soon title={t("nav.files")} lead={t("soon.files")} icon={iFiles} />
-      {:else if nav.tab === "terminal"}<Soon title={t("nav.terminal")} lead={t("soon.terminal")} icon={iTerminal} />
+      {:else if nav.tab === "files"}<Files />
+      {:else if nav.tab === "terminal"}{#await import("$lib/screens/Terminal.svelte") then m}<m.default />{/await}
       {:else}<Settings />{/if}
     </div>
   </div>
   {#if nav.sheet === "new"}<NewSession />{/if}
+  <Overlays />
 {/if}
 
 <style>

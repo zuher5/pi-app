@@ -5,7 +5,7 @@
   let { title, subtitle, onback, actions, lead }: { title: string; subtitle?: string; onback?: () => void; actions?: Snippet; lead?: Snippet } = $props();
 </script>
 
-<header class="bar">
+<header class="bar" class:has-back={!!onback}>
   {#if onback}
     <button class="icon-btn" onclick={onback} aria-label="Back"><Icon path={iBack} /></button>
   {/if}
@@ -23,7 +23,7 @@
     padding: calc(var(--safe-top) + 8px) 4px 8px 4px; background: var(--md-surface);
     position: sticky; top: 0; z-index: 5;
   }
-  .bar:not(:has(.icon-btn:first-child)) .titles { padding-left: 12px; }
+  .bar:not(.has-back) .titles { padding-left: 12px; }
   .titles { flex: 1; min-width: 0; }
   h1 { margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sub { margin: 0; color: var(--md-on-surface-variant); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

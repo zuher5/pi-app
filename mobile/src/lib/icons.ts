@@ -8,3 +8,8 @@ export {
   mdiLanDisconnect as iOffline, mdiRefresh as iRefresh, mdiFolderPlusOutline as iFolderPlus,
   mdiBrain as iThinking, mdiSourceBranch as iBranch, mdiWrenchOutline as iTool,
 } from "@mdi/js";
+export {
+  mdiFileOutline as iFile, mdiFolder as iFolder, mdiUpload as iUpload, mdiDownload as iDownload,
+  mdiPencilOutline as iEdit, mdiContentSave as iSave, mdiFileImageOutline as iImage, mdiSourceCommit as iGit,
+  mdiEyeOutline as iEye, mdiEyeOffOutline as iEyeOff, mdiKeyboardOutline as iKeys, mdiHome as iHome,
+} from "@mdi/js";

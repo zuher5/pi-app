@@ -17,8 +17,14 @@ const en = {
   "chat.copy": "Copy", "chat.copied": "Copied",
   "settings.title": "Settings", "settings.server": "Server", "settings.connectedTo": "Connected to {name}", "settings.unpair": "Forget this server",
   "settings.language": "Language", "settings.theme": "Theme", "settings.theme.system": "System", "settings.theme.light": "Latte (light)", "settings.theme.dark": "Mocha (dark)",
-  "soon.files": "Browse, edit and upload project files, with Git diffs.", "soon.terminal": "A shell on the server, in the session's folder.",
-  "soon.badge": "Next phase",
+  "files.browse": "Browse", "files.changes": "Changes", "files.empty": "This folder is empty", "files.noProject": "Pick a project, or open a session to follow its folder.",
+  "files.upload": "Upload", "files.uploaded": "Uploaded {n} file(s)", "files.conflict": "{names} already exist. Replace?", "files.replace": "Replace", "files.skip": "Skip",
+  "files.clean": "No changes. The working tree is clean.", "files.notGit": "This project isn't a Git repository.", "files.hidden": "Show hidden",
+  "file.view": "File", "file.diff": "Diff", "file.edit": "Edit", "file.save": "Save", "file.cancel": "Cancel", "file.saved": "Saved", "file.download": "Download",
+  "file.changedOnServer": "The file changed on the server since you opened it. Save anyway?", "file.saveAnyway": "Save anyway", "file.binary": "No preview for this file type.",
+  "file.tooBig": "Showing the first 2 MB. Editing is off for files this large.", "file.noDiff": "No changes in this file.", "file.unsaved": "Discard your edits?", "file.discard": "Discard",
+  "term.new": "New terminal", "term.noProject": "Pick a project to open a shell in it.", "term.exited": "Process exited ({code}).", "term.restart": "Restart",
+  "term.keys": "Keys",
   "err.network": "Can't reach the server.", "err.generic": "Something went wrong: {msg}",
 } as const;
 
@@ -41,8 +47,14 @@ const id: Record<Key, string> = {
   "chat.copy": "Salin", "chat.copied": "Tersalin",
   "settings.title": "Setelan", "settings.server": "Server", "settings.connectedTo": "Terhubung ke {name}", "settings.unpair": "Lupakan server ini",
   "settings.language": "Bahasa", "settings.theme": "Tema", "settings.theme.system": "Ikuti sistem", "settings.theme.light": "Latte (terang)", "settings.theme.dark": "Mocha (gelap)",
-  "soon.files": "Jelajahi, edit, dan unggah file proyek, lengkap dengan diff Git.", "soon.terminal": "Shell di server, di folder sesi.",
-  "soon.badge": "Fase berikutnya",
+  "files.browse": "Jelajah", "files.changes": "Perubahan", "files.empty": "Folder ini kosong", "files.noProject": "Pilih proyek, atau buka sesi agar mengikuti foldernya.",
+  "files.upload": "Unggah", "files.uploaded": "{n} file terunggah", "files.conflict": "{names} sudah ada. Timpa?", "files.replace": "Timpa", "files.skip": "Lewati",
+  "files.clean": "Tidak ada perubahan. Working tree bersih.", "files.notGit": "Proyek ini bukan repositori Git.", "files.hidden": "Tampilkan tersembunyi",
+  "file.view": "File", "file.diff": "Diff", "file.edit": "Edit", "file.save": "Simpan", "file.cancel": "Batal", "file.saved": "Tersimpan", "file.download": "Unduh",
+  "file.changedOnServer": "File berubah di server sejak kamu buka. Tetap simpan?", "file.saveAnyway": "Tetap simpan", "file.binary": "Tidak ada pratinjau untuk jenis file ini.",
+  "file.tooBig": "Menampilkan 2 MB pertama. Edit dimatikan untuk file sebesar ini.", "file.noDiff": "Tidak ada perubahan di file ini.", "file.unsaved": "Buang suntingan?", "file.discard": "Buang",
+  "term.new": "Terminal baru", "term.noProject": "Pilih proyek untuk membuka shell di dalamnya.", "term.exited": "Proses selesai ({code}).", "term.restart": "Mulai ulang",
+  "term.keys": "Tombol",
   "err.network": "Server tidak terjangkau.", "err.generic": "Terjadi kesalahan: {msg}",
 };
 

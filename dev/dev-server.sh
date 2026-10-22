@@ -3,8 +3,8 @@
 set -e
 HERE="$(cd "$(dirname "$0")" && pwd)"
 export NO_PROXY="127.0.0.1,localhost${NO_PROXY:+,$NO_PROXY}" no_proxy="127.0.0.1,localhost${no_proxy:+,$no_proxy}"
-export PI_CODING_AGENT_DIR="${PI_CODING_AGENT_DIR:-/tmp/piapp-agent}"
-DEMO="${DEMO_PROJECT:-/tmp/piapp-demo}"
+export PI_CODING_AGENT_DIR="${PI_CODING_AGENT_DIR:-/workspace/work/piapp-dev/agent}"
+DEMO="${DEMO_PROJECT:-/workspace/work/piapp-dev/demo}"
 mkdir -p "$PI_CODING_AGENT_DIR" "$DEMO/src"
 [ -f "$DEMO/README.md" ] || { echo "# Demo project" > "$DEMO/README.md"; echo "export const x = 1;" > "$DEMO/src/index.ts"; (cd "$DEMO" && git init -q && git add -A && git -c user.email=d@d -c user.name=d commit -qm init); }
 cat > "$PI_CODING_AGENT_DIR/models.json" <<JSON
