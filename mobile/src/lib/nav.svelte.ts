@@ -1,5 +1,6 @@
-export type Tab = "sessions" | "chat" | "files" | "terminal" | "settings";
-export const nav = $state<{ tab: Tab; sheet: "new" | null }>({ tab: "sessions", sheet: null });
+export type Tab = "chat" | "files" | "terminal" | "settings";
+/** Chat is home; sessions live in the side drawer, the other screens open from it. */
+export const nav = $state<{ tab: Tab; sheet: "new" | null; drawer: boolean }>({ tab: "chat", sheet: null, drawer: false });
 
 /** System Back: screens push a handler while they have something to close; the newest runs first. */
 const backHandlers: (() => boolean)[] = [];

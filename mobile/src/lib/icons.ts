@@ -14,3 +14,8 @@ export {
   mdiEyeOutline as iEye, mdiEyeOffOutline as iEyeOff, mdiKeyboardOutline as iKeys, mdiHome as iHome,
 } from "@mdi/js";
 export { mdiSourceFork as iFork, mdiChip as iModel, mdiRadioboxMarked as iRadioOn, mdiRadioboxBlank as iRadioOff } from "@mdi/js";
+export {
+  mdiMenu as iMenu, mdiSquareEditOutline as iEditNew, mdiPlusCircleOutline as iAttach, mdiDotsHorizontal as iDots,
+  mdiCompassOutline as iExplore, mdiClipboardTextOutline as iPlan, mdiBugOutline as iBug, mdiMagnifyScan as iReview,
+  mdiTestTube as iTest, mdiBookOpenVariant as iExplain, mdiTimerOutline as iTimer, mdiChartDonut as iUsage,
+} from "@mdi/js";

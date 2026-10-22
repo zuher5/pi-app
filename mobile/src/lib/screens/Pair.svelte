@@ -2,6 +2,7 @@
   import { Capacitor } from "@capacitor/core";
   import Icon from "../components/Icon.svelte";
   import Rosette from "../components/Rosette.svelte";
+  import Scanner from "../components/Scanner.svelte";
   import { iQr, iPhone } from "../icons";
   import { t } from "../i18n.svelte";
   import { manualPairing, parsePairingLink, PairingError } from "../bridge/pairing";
@@ -27,17 +28,10 @@
     }
   }
 
-  async function scan() {
-    const { BarcodeScanner } = await import("@capacitor-mlkit/barcode-scanning");
-    try {
-      const { camera } = await BarcodeScanner.requestPermissions();
-      if (camera !== "granted" && camera !== "limited") return;
-      const { barcodes } = await BarcodeScanner.scan();
-      const raw = barcodes[0]?.rawValue;
-      if (raw) await run(() => parsePairingLink(raw));
-    } catch (e) {
-      error = String(e);
-    }
+  let scanning = $state(false);
+  function scanned(raw: string) {
+    scanning = false;
+    void run(() => parsePairingLink(raw));
   }
 
   $effect(() => {
@@ -45,13 +39,16 @@
   });
 </script>
 
+{#if scanning}
+  <Scanner onresult={scanned} oncancel={() => (scanning = false)} onerror={(m) => { scanning = false; error = m; }} />
+{:else}
 <main class="pair">
   <div class="mark"><Rosette size={112} state={busy ? "streaming" : "idle"} /></div>
   <h1 class="headline-s">{t("pair.title")}</h1>
   <p class="body-l lead">{t("pair.lead")}</p>
 
   {#if native}
-    <button class="btn btn-filled wide" onclick={scan} disabled={busy}><Icon path={iQr} size={18} />{t("pair.scan")}</button>
+    <button class="btn btn-filled wide" onclick={() => { error = null; scanning = true; }} disabled={busy}><Icon path={iQr} size={18} />{t("pair.scan")}</button>
     <div class="or label-m"><span>{t("pair.manual")}</span></div>
   {/if}
 
@@ -73,6 +70,7 @@
     </button>
   </form>
 </main>
+{/if}
 
 <style>
   .pair {

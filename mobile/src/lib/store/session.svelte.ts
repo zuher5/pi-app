@@ -50,6 +50,9 @@ export class LiveSession {
   notice = $state<string | null>(null);
   pendingUi = $state<Event[]>([]);
   loading = $state(false);
+  /** Session totals from the snapshot, and the live context window fill from get_state. */
+  stats = $state<SessionSnapshot["stats"] | null>(null);
+  contextUsage = $state<{ percent: number | null; contextWindow: number; tokens: number | null } | null>(null);
 
   private es: EventSource | null = null;
   private backoff = 1000;
@@ -103,6 +106,24 @@ export class LiveSession {
     this.messages = snap.context.messages.map(normalizeToolCalls);
     this.hasMore = snap.context.hasMore;
     this.oldestEntryId = snap.context.oldestEntryId ?? snap.context.entryIds[0];
+    this.stats = snap.stats ?? null;
+    void this.refreshState();
+  }
+
+  /** Context usage only exists while the session is loaded on the server. */
+  async refreshState(): Promise<void> {
+    const id = this.id;
+    if (!id) return;
+    const r = await api.state(id).catch(() => null);
+    if (id !== this.id || !r) return;
+    if (r.state?.contextUsage !== undefined) this.contextUsage = r.state.contextUsage ?? null;
+  }
+
+  /** Start a session in a folder and send its first prompt. */
+  async startIn(cwd: string, text: string): Promise<void> {
+    const { sessionId } = await api.newSession(cwd);
+    await this.open(sessionId);
+    await this.send(text);
   }
 
   async loadOlder(): Promise<void> {
@@ -163,6 +184,13 @@ export class LiveSession {
     this.pendingUi = [];
     this.retry = null;
     this.id = null;
+    this.info = null;
+    this.messages = [];
+    this.entryIds = [];
+    this.tree = [];
+    this.editing = null;
+    this.stats = null;
+    this.contextUsage = null;
   }
 
   handle(event: Event): void {

@@ -1,16 +1,28 @@
 <script lang="ts">
   import ToolCard from "./ToolCard.svelte";
   import Icon from "./Icon.svelte";
-  import { iThinking, iExpand, iError } from "../icons";
+  import { iThinking, iExpand, iError, iCopy, iCheck } from "../icons";
+  import { duration } from "../time";
   import { renderMarkdown } from "../markdown";
   import { t } from "../i18n.svelte";
   import type { AgentMessage, ToolResultMessage } from "@pi/types";
   import type { ToolRun } from "../store/session.svelte";
 
-  let { message, results, tools, streaming = false, onactions }: {
+  let { message, results, tools, streaming = false, onactions, footer }: {
     message: AgentMessage; results: Record<string, ToolResultMessage>; tools: Record<string, ToolRun>; streaming?: boolean;
     onactions?: (text: string) => void;
+    /** Shown under the final reply of a turn: what answered and how long it took. */
+    footer?: { model?: string; thinking?: string; elapsedMs?: number };
   } = $props();
+  let copied = $state(false);
+  const replyText = $derived(
+    message.role === "assistant" ? message.content.map((b) => (b.type === "text" ? b.text : "")).filter(Boolean).join("\n\n") : "",
+  );
+  async function copyReply() {
+    await navigator.clipboard?.writeText(replyText).catch(() => {});
+    copied = true;
+    setTimeout(() => (copied = false), 1500);
+  }
   let thinkingOpen = $state<Record<number, boolean>>({});
 
   const userText = $derived(
@@ -43,19 +55,30 @@
     {#if message.stopReason === "error" && message.errorMessage}
       <div class="error body-m" role="alert"><Icon path={iError} size={18} /><span><strong>{t("chat.error")}</strong><br />{message.errorMessage}</span></div>
     {/if}
+    {#if footer && !streaming}
+      <div class="foot body-s">
+        <span class="meta">{[footer.model, footer.thinking, footer.elapsedMs !== undefined ? duration(footer.elapsedMs) : ""].filter(Boolean).join(" · ")}</span>
+        {#if replyText}<button class="copy" onclick={copyReply} aria-label={t("msg.copy")}><Icon path={copied ? iCheck : iCopy} size={16} /></button>{/if}
+      </div>
+    {/if}
   </div>
 {/if}
 
 <style>
   .user { display: flex; justify-content: flex-end; padding-left: 48px; }
   .bubble {
-    background: var(--md-primary-container); color: var(--md-on-primary-container);
-    padding: 10px 16px; border-radius: 20px 20px 6px 20px; white-space: pre-wrap; word-break: break-word;
+    background: var(--md-surface-container-high); color: var(--md-on-surface);
+    padding: 10px 16px; border-radius: 18px 18px 6px 18px; white-space: pre-wrap; word-break: break-word;
     border: 0; font: inherit; text-align: left; cursor: pointer; min-height: 44px; user-select: text;
   }
   .bubble:active { filter: brightness(0.96); }
   .assistant { display: grid; gap: 10px; min-width: 0; }
-  .md { word-break: break-word; overflow-wrap: anywhere; }
+  .foot { display: flex; align-items: center; gap: 8px; color: var(--md-on-surface-variant); margin-top: -2px; }
+  .meta { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: 0; }
+  .copy { margin-left: auto; width: 36px; height: 36px; border: 0; border-radius: 50%; background: none; color: inherit; display: grid; place-items: center; cursor: pointer; flex: none; }
+  .copy:hover { background: color-mix(in oklab, var(--md-on-surface) 8%, transparent); }
+  .md { word-break: break-word; overflow-wrap: anywhere; line-height: 1.625rem; }
+  .md :global(:not(pre) > code) { color: var(--ctp-green); }
   .md :global(p) { margin: 0 0 0.75em; } .md :global(p:last-child) { margin-bottom: 0; }
   .md :global(ul), .md :global(ol) { margin: 0 0 0.75em; padding-left: 1.4em; }
   .md :global(li + li) { margin-top: 0.25em; }

@@ -27,7 +27,7 @@ export interface SessionSnapshot {
   leafId: string | null;
   context: { messages: AgentMessage[]; entryIds: string[]; oldestEntryId?: string; hasMore: boolean; model?: { provider: string; modelId: string } | null; thinkingLevel?: string };
   tree?: TreeNode[];
-  stats?: { tokens: { total: number }; cost: number };
+  stats?: { tokens: { input: number; output: number; cacheRead: number; cacheWrite: number; total: number }; cost: number; toolCalls?: number; userMessages?: number };
 }
 
 export interface TreeNode {
@@ -43,6 +43,13 @@ export interface ModelsResponse {
   thinkingLevels: Record<string, string[]>;
 }
 
+export interface UsageBucket { id: string; label: string; groupLabel?: string; used?: number; remaining?: number; limit?: number; unit: "percent" | "currency" | "count"; currency?: string; resetsAt?: number; period?: string }
+export interface UsageMetric { id: string; label: string; value: number | string; unit?: "percent" | "currency" | "count"; currency?: string }
+export type ProviderUsageResult =
+  | { providerId: string; status: "ready"; report: { providerName: string; buckets: UsageBucket[]; metrics: UsageMetric[] } }
+  | { providerId: string; status: "auth-unavailable" | "query-failed"; message: string };
+export const USAGE_PROVIDERS = ["openai-codex", "deepseek", "openrouter", "moonshotai", "moonshotai-cn", "minimax", "minimax-cn", "vercel-ai-gateway", "opencode-go", "kimi-coding"];
+
 export type ListedSession = SessionInfo & { projectRoot?: string; projectKey?: string; branch?: string };
 
 export const api = {
@@ -52,6 +59,8 @@ export const api = {
   older: (id: string, leafId: string | null, before: string) =>
     json<{ context: SessionSnapshot["context"] }>(`/api/sessions/${encodeURIComponent(id)}/context?tail=50&deferThinking&deferMedia&before=${encodeURIComponent(before)}${leafId ? `&leafId=${encodeURIComponent(leafId)}` : ""}`),
   models: (cwd: string) => json<ModelsResponse>(`/api/models?cwd=${encodeURIComponent(cwd)}`),
+  state: (id: string) => json<{ running: boolean; state?: { contextUsage?: { percent: number | null; contextWindow: number; tokens: number | null } | null } }>(`/api/agent/${encodeURIComponent(id)}?systemPrompt=0`),
+  providerUsage: (providerId: string) => json<ProviderUsageResult>("/api/provider-usage/query", post({ providerId })),
   running: () => json<{ runningSessionIds: string[] }>("/api/agent/running"),
   newSession: (cwd: string) => json<{ sessionId: string; model: { provider: string; modelId: string } | null }>("/api/agent/new", post({ cwd, type: "ensure_session" })),
   command: <T = unknown>(id: string, body: Record<string, unknown>) => json<{ success?: boolean; data?: T }>(`/api/agent/${encodeURIComponent(id)}`, post(body)),
