@@ -13,3 +13,4 @@ export {
   mdiPencilOutline as iEdit, mdiContentSave as iSave, mdiFileImageOutline as iImage, mdiSourceCommit as iGit,
   mdiEyeOutline as iEye, mdiEyeOffOutline as iEyeOff, mdiKeyboardOutline as iKeys, mdiHome as iHome,
 } from "@mdi/js";
+export { mdiSourceFork as iFork, mdiChip as iModel, mdiRadioboxMarked as iRadioOn, mdiRadioboxBlank as iRadioOff } from "@mdi/js";

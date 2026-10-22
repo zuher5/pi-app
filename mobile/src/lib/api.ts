@@ -26,7 +26,21 @@ export interface SessionSnapshot {
   info: (SessionInfo & { projectRoot?: string; branch?: string }) | null;
   leafId: string | null;
   context: { messages: AgentMessage[]; entryIds: string[]; oldestEntryId?: string; hasMore: boolean; model?: { provider: string; modelId: string } | null; thinkingLevel?: string };
+  tree?: TreeNode[];
   stats?: { tokens: { total: number }; cost: number };
+}
+
+export interface TreeNode {
+  entry: { id: string; parentId: string | null; type: string; timestamp: string };
+  children: TreeNode[];
+  compressedEntryIds?: string[];
+  branchPreview?: { role: string; text: string };
+}
+
+export interface ModelsResponse {
+  modelList: { id: string; name: string; provider: string; input?: string[] }[];
+  defaultModel: { provider: string; modelId: string } | null;
+  thinkingLevels: Record<string, string[]>;
 }
 
 export type ListedSession = SessionInfo & { projectRoot?: string; projectKey?: string; branch?: string };
@@ -37,6 +51,7 @@ export const api = {
     json<SessionSnapshot>(`/api/sessions/${encodeURIComponent(id)}?tree=summary&tail=50&deferThinking&deferMedia&force=1`),
   older: (id: string, leafId: string | null, before: string) =>
     json<{ context: SessionSnapshot["context"] }>(`/api/sessions/${encodeURIComponent(id)}/context?tail=50&deferThinking&deferMedia&before=${encodeURIComponent(before)}${leafId ? `&leafId=${encodeURIComponent(leafId)}` : ""}`),
+  models: (cwd: string) => json<ModelsResponse>(`/api/models?cwd=${encodeURIComponent(cwd)}`),
   running: () => json<{ runningSessionIds: string[] }>("/api/agent/running"),
   newSession: (cwd: string) => json<{ sessionId: string; model: { provider: string; modelId: string } | null }>("/api/agent/new", post({ cwd, type: "ensure_session" })),
   command: <T = unknown>(id: string, body: Record<string, unknown>) => json<{ success?: boolean; data?: T }>(`/api/agent/${encodeURIComponent(id)}`, post(body)),

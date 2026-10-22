@@ -25,6 +25,11 @@ const en = {
   "file.tooBig": "Showing the first 2 MB. Editing is off for files this large.", "file.noDiff": "No changes in this file.", "file.unsaved": "Discard your edits?", "file.discard": "Discard",
   "term.new": "New terminal", "term.noProject": "Pick a project to open a shell in it.", "term.exited": "Process exited ({code}).", "term.restart": "Restart",
   "term.keys": "Keys",
+  "model.title": "Model", "model.thinking": "Thinking level", "model.noThinking": "This model doesn't think before answering.", "model.busy": "Wait for the reply to finish to switch.",
+  "think.off": "Off", "think.minimal": "Min", "think.low": "Low", "think.medium": "Med", "think.high": "High", "think.xhigh": "Max",
+  "branch.title": "Branches", "branch.lead": "{n} branches in this conversation. Switching keeps every branch.", "branch.current": "current", "branch.untitled": "Branch {n}", "branch.busy": "Wait for the reply to finish to switch.", "branch.failed": "Couldn't branch from that message.",
+  "msg.copy": "Copy", "msg.copied": "Copied", "msg.edit": "Edit and resend", "msg.editSub": "Starts a new branch here; the old one stays", "msg.fork": "Fork to new session", "msg.forkSub": "A new session with the history before this message", "msg.notSaved": "Edit and fork appear once this message is saved.",
+  "msg.editing": "Editing an earlier message. Sending starts a new branch.",
   "err.network": "Can't reach the server.", "err.generic": "Something went wrong: {msg}",
 } as const;
 
@@ -55,6 +60,11 @@ const id: Record<Key, string> = {
   "file.tooBig": "Menampilkan 2 MB pertama. Edit dimatikan untuk file sebesar ini.", "file.noDiff": "Tidak ada perubahan di file ini.", "file.unsaved": "Buang suntingan?", "file.discard": "Buang",
   "term.new": "Terminal baru", "term.noProject": "Pilih proyek untuk membuka shell di dalamnya.", "term.exited": "Proses selesai ({code}).", "term.restart": "Mulai ulang",
   "term.keys": "Tombol",
+  "model.title": "Model", "model.thinking": "Level thinking", "model.noThinking": "Model ini tidak berpikir dulu sebelum menjawab.", "model.busy": "Tunggu balasan selesai untuk mengganti.",
+  "think.off": "Mati", "think.minimal": "Min", "think.low": "Rendah", "think.medium": "Sedang", "think.high": "Tinggi", "think.xhigh": "Maks",
+  "branch.title": "Cabang", "branch.lead": "{n} cabang di percakapan ini. Berpindah tidak menghapus cabang mana pun.", "branch.current": "aktif", "branch.untitled": "Cabang {n}", "branch.busy": "Tunggu balasan selesai untuk berpindah.", "branch.failed": "Gagal membuat cabang dari pesan itu.",
+  "msg.copy": "Salin", "msg.copied": "Tersalin", "msg.edit": "Edit dan kirim ulang", "msg.editSub": "Membuat cabang baru di sini; cabang lama tetap ada", "msg.fork": "Fork ke sesi baru", "msg.forkSub": "Sesi baru berisi riwayat sebelum pesan ini", "msg.notSaved": "Edit dan fork muncul setelah pesan ini tersimpan.",
+  "msg.editing": "Mengedit pesan sebelumnya. Mengirim akan membuat cabang baru.",
   "err.network": "Server tidak terjangkau.", "err.generic": "Terjadi kesalahan: {msg}",
 };
 
@@ -79,4 +89,10 @@ export function t(key: Key, vars?: Record<string, string | number>): string {
   let s = dicts[i18n.locale][key] ?? en[key];
   if (vars) for (const [k, v] of Object.entries(vars)) s = s.replace(`{${k}}`, String(v));
   return s;
+}
+
+const THINK_KEYS: Record<string, Key> = { off: "think.off", minimal: "think.minimal", low: "think.low", medium: "think.medium", high: "think.high", xhigh: "think.xhigh" };
+export function thinkLabel(level: string): string {
+  const key = THINK_KEYS[level];
+  return key ? t(key) : level;
 }

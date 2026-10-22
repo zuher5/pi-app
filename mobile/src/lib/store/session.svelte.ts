@@ -7,7 +7,8 @@ import { streamReducer, INITIAL_STREAMING_STATE, type StreamingState } from "@pi
 import { normalizeToolCalls } from "@pi/normalize";
 import type { AgentMessage, ToolResultMessage } from "@pi/types";
 import type { ClientAssistantMessageEvent } from "@pi/agent-event-wire";
-import { api, type SessionSnapshot } from "../api";
+import { api, type SessionSnapshot, type TreeNode } from "../api";
+import { t } from "../i18n.svelte";
 
 export type AgentStatus = "idle" | "streaming" | "waiting" | "disconnected" | "connecting";
 export type ToolRun = { state: "running" | "done" | "error"; output?: string };
@@ -30,6 +31,12 @@ export class LiveSession {
   info = $state<SessionSnapshot["info"]>(null);
   leafId = $state<string | null>(null);
   model = $state<{ provider: string; modelId: string } | null>(null);
+  thinkingLevel = $state<string>("off");
+  /** Entry ids of the loaded messages, in order; live messages past the end have none yet. */
+  entryIds = $state<string[]>([]);
+  tree = $state<TreeNode[]>([]);
+  /** Set while the composer rewrites an earlier user message (a new branch on send). */
+  editing = $state<{ entryId: string; text: string } | null>(null);
   messages = $state<AgentMessage[]>([]);
   stream = $state<StreamingState>(INITIAL_STREAMING_STATE);
   running = $state(false);
@@ -70,6 +77,9 @@ export class LiveSession {
     this.id = id;
     this.loading = true;
     this.messages = [];
+    this.entryIds = [];
+    this.tree = [];
+    this.editing = null;
     this.stream = INITIAL_STREAMING_STATE;
     this.tools = {};
     try {
@@ -87,6 +97,9 @@ export class LiveSession {
     this.info = snap.info;
     this.leafId = snap.leafId;
     this.model = snap.context.model ?? null;
+    this.thinkingLevel = snap.context.thinkingLevel ?? "off";
+    this.tree = snap.tree ?? [];
+    this.entryIds = snap.context.entryIds;
     this.messages = snap.context.messages.map(normalizeToolCalls);
     this.hasMore = snap.context.hasMore;
     this.oldestEntryId = snap.context.oldestEntryId ?? snap.context.entryIds[0];
@@ -96,6 +109,7 @@ export class LiveSession {
     if (!this.id || !this.oldestEntryId || !this.hasMore) return;
     const { context } = await api.older(this.id, this.leafId, this.oldestEntryId);
     this.messages = [...context.messages.map(normalizeToolCalls), ...this.messages];
+    this.entryIds = [...context.entryIds, ...this.entryIds];
     this.hasMore = context.hasMore;
     this.oldestEntryId = context.oldestEntryId ?? context.entryIds[0];
   }
@@ -224,6 +238,8 @@ export class LiveSession {
         this.running = false;
         this.retry = null;
         this.stream = INITIAL_STREAMING_STATE;
+        // Pick up entry ids and the tree for the turn that just ended.
+        if (event.type === "agent_settled") void this.reload().catch(() => {});
         break;
       case "prompt_error":
       case "extension_error":
@@ -234,10 +250,63 @@ export class LiveSession {
     }
   }
 
+  /** Every branch tip of the tree, newest first, with the text that starts its branch. */
+  leaves = $derived.by(() => {
+    const out: { id: string; preview: string; timestamp: string; active: boolean }[] = [];
+    const walk = (nodes: TreeNode[], preview: string) => {
+      for (const n of nodes) {
+        const p = n.branchPreview?.text ?? preview;
+        if (n.children.length === 0) out.push({ id: n.entry.id, preview: p, timestamp: n.entry.timestamp, active: n.entry.id === this.leafId });
+        else walk(n.children, p);
+      }
+    };
+    walk(this.tree, "");
+    return out.sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1));
+  });
+
+  /** Move to another branch tip (or, for a user message, to just before it). */
+  async navigate(targetId: string): Promise<boolean> {
+    if (!this.id || this.running) return false;
+    const res = await api.command<{ cancelled?: boolean }>(this.id, { type: "navigate_tree", targetId });
+    if (res.data?.cancelled) return false;
+    await this.reload();
+    return true;
+  }
+
+  /** New session holding the history before this user message. */
+  async fork(entryId: string): Promise<string | null> {
+    if (!this.id) return null;
+    const res = await api.command<{ cancelled?: boolean; newSessionId?: string }>(this.id, { type: "fork", entryId });
+    return res.data?.cancelled ? null : res.data?.newSessionId ?? null;
+  }
+
+  async setModel(provider: string, modelId: string): Promise<void> {
+    if (!this.id) return;
+    await api.command(this.id, { type: "set_model", provider, modelId });
+    this.model = { provider, modelId };
+    const snap = await api.session(this.id).catch(() => null);
+    if (snap) this.thinkingLevel = snap.context.thinkingLevel ?? this.thinkingLevel;
+  }
+
+  async setThinking(level: string): Promise<void> {
+    if (!this.id) return;
+    await api.command(this.id, { type: "set_thinking_level", level });
+    this.thinkingLevel = level;
+  }
+
   async send(text: string, mode: "auto" | "steer" | "followUp" = "auto"): Promise<void> {
     const message = text.trim();
     if (!message || !this.id) return;
     this.notice = null;
+    if (this.editing && !this.running) {
+      // Navigate and prompt are two calls, as on the web: branch first, then send.
+      const { entryId } = this.editing;
+      this.editing = null;
+      if (!(await this.navigate(entryId).catch(() => false))) {
+        this.notice = t("branch.failed");
+        return;
+      }
+    }
     if (this.running) {
       await api.command(this.id, { type: "prompt", message, streamingBehavior: mode === "followUp" ? "followUp" : "steer" });
       return;

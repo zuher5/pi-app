@@ -7,8 +7,9 @@
   import type { AgentMessage, ToolResultMessage } from "@pi/types";
   import type { ToolRun } from "../store/session.svelte";
 
-  let { message, results, tools, streaming = false }: {
+  let { message, results, tools, streaming = false, onactions }: {
     message: AgentMessage; results: Record<string, ToolResultMessage>; tools: Record<string, ToolRun>; streaming?: boolean;
+    onactions?: (text: string) => void;
   } = $props();
   let thinkingOpen = $state<Record<number, boolean>>({});
 
@@ -20,7 +21,9 @@
 </script>
 
 {#if message.role === "user"}
-  <div class="user"><div class="bubble body-l">{userText}</div></div>
+  <div class="user">
+    <button class="bubble body-l" onclick={() => onactions?.(userText)} aria-haspopup="dialog">{userText}</button>
+  </div>
 {:else if message.role === "assistant"}
   <div class="assistant" class:streaming>
     {#each message.content as block, i (i)}
@@ -48,7 +51,9 @@
   .bubble {
     background: var(--md-primary-container); color: var(--md-on-primary-container);
     padding: 10px 16px; border-radius: 20px 20px 6px 20px; white-space: pre-wrap; word-break: break-word;
+    border: 0; font: inherit; text-align: left; cursor: pointer; min-height: 44px; user-select: text;
   }
+  .bubble:active { filter: brightness(0.96); }
   .assistant { display: grid; gap: 10px; min-width: 0; }
   .md { word-break: break-word; overflow-wrap: anywhere; }
   .md :global(p) { margin: 0 0 0.75em; } .md :global(p:last-child) { margin-bottom: 0; }

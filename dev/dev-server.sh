@@ -9,7 +9,8 @@ mkdir -p "$PI_CODING_AGENT_DIR" "$DEMO/src"
 [ -f "$DEMO/README.md" ] || { echo "# Demo project" > "$DEMO/README.md"; echo "export const x = 1;" > "$DEMO/src/index.ts"; (cd "$DEMO" && git init -q && git add -A && git -c user.email=d@d -c user.name=d commit -qm init); }
 cat > "$PI_CODING_AGENT_DIR/models.json" <<JSON
 { "providers": { "mock": { "baseUrl": "http://127.0.0.1:4010/v1", "api": "openai-completions", "apiKey": "mock",
-  "models": [ { "id": "mock-coder", "name": "Mock Coder", "contextWindow": 128000, "maxTokens": 8000 } ] } } }
+  "models": [ { "id": "mock-coder", "name": "Mock Coder", "contextWindow": 128000, "maxTokens": 8000 },
+    { "id": "mock-thinker", "name": "Mock Thinker", "reasoning": true, "contextWindow": 200000, "maxTokens": 16000 } ] } } }
 JSON
 cat > "$PI_CODING_AGENT_DIR/settings.json" <<JSON
 { "defaultProvider": "mock", "defaultModel": "mock-coder" }

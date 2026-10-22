@@ -1,15 +1,21 @@
 <script lang="ts">
   import Icon from "./Icon.svelte";
+  import type { Snippet } from "svelte";
   import { iSend, iStop } from "../icons";
   import { t } from "../i18n.svelte";
 
-  let { running, disabled = false, onsend, onstop }: {
-    running: boolean; disabled?: boolean; onsend: (text: string) => void; onstop: () => void;
+  let { running, disabled = false, onsend, onstop, text = $bindable(""), chips }: {
+    running: boolean; disabled?: boolean; onsend: (text: string) => void; onstop: () => void; text?: string; chips?: Snippet;
   } = $props();
-  let text = $state("");
-  let el: HTMLTextAreaElement;
+  let el = $state<HTMLTextAreaElement>();
+
+  export function focus() {
+    el?.focus();
+    queueMicrotask(grow);
+  }
 
   function grow() {
+    if (!el) return;
     el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
   }
@@ -22,6 +28,7 @@
 </script>
 
 <form class="composer" onsubmit={(e) => { e.preventDefault(); submit(); }}>
+  {#if chips}<div class="chips">{@render chips()}</div>{/if}
   <div class="box">
     <textarea
       bind:this={el} bind:value={text} oninput={grow} rows="1" class="body-l"
@@ -39,7 +46,8 @@
 </form>
 
 <style>
-  .composer { padding: 8px 12px 12px; background: var(--md-surface); flex: none; }
+  .composer { padding: 4px 12px 12px; background: var(--md-surface); flex: none; }
+  .chips { display: flex; gap: 8px; max-width: 840px; margin: 0 auto 6px; overflow-x: auto; scrollbar-width: none; }
   .box {
     display: flex; align-items: flex-end; gap: 4px; padding: 4px 4px 4px 20px; border-radius: var(--radius-xl);
     background: var(--md-surface-container-high); max-width: 840px; margin: 0 auto;
