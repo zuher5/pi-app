@@ -1468,13 +1468,13 @@
 .settings-section-tab {
   position: relative;
   display: flex;
-  flex: 0 1 auto;
+  flex: 0 0 96px;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  min-width: 0;
+  gap: 5px;
+  width: 96px;
   height: 100%;
-  padding: 0 10px;
+  padding: 0 2px;
   border: 0;
   outline: none;
   background: transparent;
@@ -1605,12 +1605,12 @@
   margin: 6px 0 0;
 }
 
-/* Thirty columns: System spans the first row; then five light themes and five dark ones
-   (six columns each), a row of three wide tiles (ten each), and Pi-App's two (fifteen each). */
+/* Fifteen columns: System spans the first row; then five light themes and five dark ones
+   (three columns each), and a row of three wide tiles (five columns each). */
 .settings-theme-options {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-auto-rows: 44px;
+  grid-template-columns: repeat(15, minmax(0, 1fr));
+  grid-auto-rows: 40px;
   gap: 10px;
   max-width: 428px;
   padding: 4px;
@@ -1619,10 +1619,18 @@
 .settings-theme-option {
   position: relative;
   display: flex;
+  grid-column: span 3;
   min-width: 0;
-  height: 44px;
   border-radius: 9px;
   cursor: pointer;
+}
+
+.settings-theme-option[data-system] {
+  grid-column: 1 / -1;
+}
+
+.settings-theme-option[data-wide] {
+  grid-column: span 5;
 }
 
 .settings-theme-swatch {
@@ -1954,7 +1962,7 @@
   font-size: 11px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 640px) {
   .config-add-source-example.has-label {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -1970,7 +1978,7 @@
 
   .config-sidebar {
     width: 100%;
-    height: 180px;
+    height: 190px;
     border-right: 0;
     border-bottom: 1px solid var(--border);
   }
@@ -2012,23 +2020,6 @@
     background: var(--bg-panel);
     color: var(--text);
     font-size: 16px;
-  }
-
-  .enabled-models-row-id {
-    white-space: normal;
-    word-break: break-all;
-    overflow-wrap: anywhere;
-  }
-
-  .config-detail-path {
-    white-space: normal;
-    word-break: break-all;
-    overflow-wrap: anywhere;
-  }
-
-  .config-field.is-horizontal {
-    grid-template-columns: 1fr;
-    gap: 6px;
   }
 }
 

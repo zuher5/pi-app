@@ -753,11 +753,11 @@ function HeaderListEditor({ headers, onChange }: {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
       {rows.map((row) => (
-        <div key={row.id} style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        <div key={row.id} style={{ display: "flex", gap: 6 }}>
           <input value={row.name} onChange={(e) => setEntry(row.id, { name: e.target.value })}
-            placeholder="Header-Name" style={{ ...inputStyle, fontFamily: "var(--font-mono)", flex: 1, minWidth: 100 }} />
+            placeholder="Header-Name" style={{ ...inputStyle, fontFamily: "var(--font-mono)", flex: 1 }} />
           <input value={row.value} onChange={(e) => setEntry(row.id, { value: e.target.value })}
-            placeholder="value" style={{ ...inputStyle, fontFamily: "var(--font-mono)", flex: 1, minWidth: 100 }} />
+            placeholder="value" style={{ ...inputStyle, fontFamily: "var(--font-mono)", flex: 1 }} />
           <button onClick={() => removeEntry(row.id)} style={rowBtnStyle}>✕</button>
         </div>
       ))}

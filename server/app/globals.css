@@ -283,48 +283,6 @@ html[data-theme="zenburn"],
   --bg-subtle: rgba(220,220,204,0.04);
 }
 
-/* Pi-App: Catppuccin Mocha (catppuccin.com/palette). Base/mantle/surfaces, text ladder, mauve accent. */
-html[data-theme="mocha"],
-[data-theme="mocha"] {
-  color-scheme: dark;
-  --bg: #1e1e2e;
-  --bg-panel: #181825;
-  --bg-hover: #313244;
-  --bg-selected: #45475a;
-  --border: #45475a;
-  --text: #cdd6f4;
-  --text-muted: #bac2de;
-  --text-dim: #a6adc8;
-  --accent: #cba6f7;
-  --accent-hover: #dcc4fa;
-  --accent-contrast: #1e1e2e;
-  --user-bg: #313244;
-  --assistant-bg: #1e1e2e;
-  --tool-bg: #181825;
-  --bg-subtle: rgba(205,214,244,0.04);
-}
-
-/* Pi-App: Lime. Green-black neutrals with a lime-400 accent; dark only. */
-html[data-theme="lime"],
-[data-theme="lime"] {
-  color-scheme: dark;
-  --bg: #121410;
-  --bg-panel: #191c16;
-  --bg-hover: #22261d;
-  --bg-selected: #2c3125;
-  --border: #3a4131;
-  --text: #e6ecdc;
-  --text-muted: #b4bfa5;
-  --text-dim: #9aa68a;
-  --accent: #a3e635;
-  --accent-hover: #bef264;
-  --accent-contrast: #1a2e05;
-  --user-bg: #22261d;
-  --assistant-bg: #121410;
-  --tool-bg: #171a14;
-  --bg-subtle: rgba(230,236,220,0.04);
-}
-
 /* WebKit reports dvh/innerHeight without the status-bar strip for installed
    home-screen apps even though the layout still starts at the screen's top.
    In standalone mode there is no browser toolbar to make vh unstable, and vh

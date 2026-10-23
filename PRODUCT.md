@@ -3,17 +3,28 @@
 <!-- impeccable:product-schema 1 -->
 
 ## Platform
-Web / PWA (Desktop, Tablet, Mobile Browser)
+Web / PWA (desktop, tablet, mobile browser)
 
 ## Stack
-Next.js 16 (App Router) + React 19 + TypeScript + Tailwind CSS.
-Built on the clean, full-featured Pi Web architecture with pairing token authentication.
+Next.js (App Router) + React + TypeScript, forked from [agegr/pi-web](https://github.com/agegr/pi-web) (MIT). Pi-App keeps the upstream client and server byte-for-byte except for the pairing bridge and launcher.
 
 ## Product Purpose
-Pi-App provides full desktop and mobile web access to the `pi` coding agent. It delivers the complete default Pi Web user experience with custom themes (Catppuccin Mocha as default, Lime) and seamless QR pairing for phone and remote access.
+Pi-App puts the `pi` coding agent on a phone, in the phone's own browser, without installing an app: run `pi-app`, scan the QR, and the full pi-web UI opens already signed in. Everything pi-web does — streaming chat, branching, files, git, terminal, models, MCP, skills, settings — behaves exactly as upstream, with upstream's UI, UX and themes.
 
-## Capabilities
-- Complete Pi Web feature set: streaming chat, branching, tree navigator, file explorer/editor, git diff, terminal (PTY), models configuration, skills, MCP, plugins, and settings.
-- Default Pi Web UI/UX: authentic layout, standard responsive sizing, rich interactive swatch grid in Appearance settings.
-- Custom Themes: 4 balanced, proportional tiles in a 2x2 grid: System (standard dark / auto), Light, Catppuccin Mocha (default), and Lime, with fluid compact responsiveness in settings and configure panels.
-- One-command launcher: unified `pi-app` command across Linux, Termux, and Windows that prints QR code for instant pairing on mobile without installing an app.
+## Positioning
+Not a re-skin. Pi-App is pi-web plus two things: a one-command launcher that works the same on Linux, macOS, Termux and Windows, and QR pairing that links a phone to the running server.
+
+## Capabilities and Constraints
+- Upstream UI/UX and theme set, unmodified: System (follows the OS), light, dark, high-contrast and Zenburn palettes, the same Settings panels, components and CSS.
+- Pairing: the QR opens `/pair#t=<token>`; the token is traded for a 90-day sign-in cookie, revoked by rotating the token. Off loopback every request needs it (or `PI_WEB_PASSWORD`).
+- Launcher: `pi-app` installs dependencies and builds only when the code changed, then starts the server and prints the QR; `pi-app pair` reprints it; `pi-app token --rotate` signs paired browsers out.
+- Plain HTTP on LAN; Tailscale recommended outside home. Termux listens on loopback only.
+
+## Brand Commitments
+Name: "Pi-App". No logo or brand assets; upstream pi-web's visual identity is the app's identity.
+
+## Product Principles
+1. Upstream first: any UI or behaviour question is answered by pi-web, not by Pi-App.
+2. The fork stays small enough to rebase on upstream at any time.
+3. Pairing never widens exposure: nothing off loopback answers without the token.
+4. One command, every platform.

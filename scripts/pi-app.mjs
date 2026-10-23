@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-// One-command launcher: `./pi-app` after `git clone`.
-// First run installs the server's dependencies and builds it; later runs
-// rebuild only when the code changed. Then it starts the server, which
-// prints the pairing QR and the server address(es).
+// Unified launcher for Linux, macOS, Termux and Windows: `pi-app`.
+// First run installs the server's dependencies and builds it; later runs rebuild
+// only when the code changed. Then it starts the server, which prints the
+// pairing QR and the server address(es).
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync, writeFileSync, statSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync, statSync, readdirSync, symlinkSync } from "node:fs";
 import { createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -15,26 +15,26 @@ const npm = process.platform === "win32" ? "npm.cmd" : "npm";
 const say = (msg) => process.stdout.write(`\x1b[36m▸\x1b[0m ${msg}\n`);
 const fail = (msg) => { process.stderr.write(`\x1b[31m✖\x1b[0m ${msg}\n`); process.exit(1); };
 
-// Auto-register `pi-app` in user's PATH (Termux / Linux) if available so `pi-app` works from anywhere.
-try {
-  if (process.platform !== "win32") {
-    const candidateDirs = [
-      process.env.PREFIX ? path.join(process.env.PREFIX, "bin") : null,
-      path.join(process.env.HOME || "", ".local", "bin"),
-    ].filter(Boolean);
-    for (const binDir of candidateDirs) {
-      if (existsSync(binDir)) {
-        const linkPath = path.join(binDir, "pi-app");
-        if (!existsSync(linkPath)) {
-          import("node:fs").then(({ symlinkSync }) => {
-            try { symlinkSync(path.join(root, "pi-app"), linkPath); } catch {}
-          });
-        }
-        break;
-      }
-    }
+// Register `pi-app` on PATH once (Termux `$PREFIX/bin`, else `~/.local/bin`) so the
+// command works from any folder. Best effort: a read-only PATH is not an error.
+function linkOnPath() {
+  if (process.platform === "win32") return;
+  const candidates = [
+    process.env.PREFIX ? path.join(process.env.PREFIX, "bin") : null,
+    process.env.HOME ? path.join(process.env.HOME, ".local", "bin") : null,
+  ].filter(Boolean);
+  const binDir = candidates.find((dir) => existsSync(dir));
+  if (!binDir) return;
+  const linkPath = path.join(binDir, "pi-app");
+  if (existsSync(linkPath)) return;
+  try {
+    symlinkSync(path.join(root, "pi-app"), linkPath);
+  } catch {
+    // PATH is not writable; `npm link` remains the explicit opt-in.
   }
-} catch {}
+}
+
+linkOnPath();
 
 // Node version gate (pi needs >= 22.19).
 const [maj, min] = process.versions.node.split(".").map(Number);
