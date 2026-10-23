@@ -686,6 +686,20 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
   const [toolDropdownOpen, setToolDropdownOpen] = useState(false);
   const [thinkingDropdownOpen, setThinkingDropdownOpen] = useState(false);
   const [controlsMenuOpen, setControlsMenuOpen] = useState(false);
+  const [controlsMenuTop, setControlsMenuTop] = useState<number | null>(null);
+
+  const updateControlsMenuTop = useCallback(() => {
+    if (controlsMenuRef.current) {
+      const rect = controlsMenuRef.current.getBoundingClientRect();
+      setControlsMenuTop(rect.top);
+    }
+  }, []);
+
+  useLayoutEffect(() => {
+    if (thinkingDropdownOpen || toolDropdownOpen) {
+      updateControlsMenuTop();
+    }
+  }, [thinkingDropdownOpen, toolDropdownOpen, updateControlsMenuTop]);
   const [attachedImages, setAttachedImages] = useState<AttachedImage[]>(() => (
     draftKey ? draftImagesToAttachedImages(getDraft(draftKey)?.images) : []
   ));
@@ -2427,7 +2441,6 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
           gridTemplateColumns: isMobile ? "minmax(0, 1fr) auto" : undefined,
           alignItems: "center",
           gap: 6,
-          position: "relative",
         }}>
 
           {/* LEFT: attach + model selector (idle) or steer/followup toggle (streaming) */}
@@ -2485,7 +2498,7 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
             display: "flex",
             alignItems: "center",
             justifyContent: "flex-end",
-            position: isMobile && controlsMenuOpen ? "static" : "relative",
+            position: "relative",
             marginLeft: isMobile ? 0 : "auto",
           }}>
             {isMobile && (
@@ -2534,17 +2547,17 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
             <div style={{
               display: isMobile ? (controlsMenuOpen ? "flex" : "none") : "flex",
               alignItems: "center",
-              gap: isMobile ? 0 : 2,
+              gap: isMobile ? 1 : 2,
               ...(isMobile ? {
                 position: "absolute",
-                left: 0,
                 right: 0,
                 bottom: 0,
                 zIndex: 60,
-                padding: "2px",
-                width: "100%",
-                boxSizing: "border-box",
-                justifyContent: "space-between",
+                padding: 1,
+                width: "max-content",
+                maxWidth: "calc(100vw - 32px)",
+                flexWrap: "nowrap",
+                justifyContent: "flex-end",
                 border: "1px solid color-mix(in srgb, var(--border) 72%, transparent)",
                 borderRadius: 10,
                 background: "color-mix(in srgb, var(--bg-panel) 92%, var(--bg))",
@@ -2553,9 +2566,12 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
               } : null),
             }}>
             {onThinkingLevelChange && (
-              <div ref={thinkingDropdownRef} style={{ position: "relative", flex: isMobile ? "1 1 50%" : undefined, minWidth: 0 }}>
+              <div ref={thinkingDropdownRef} style={{ position: "relative" }}>
                 <button
-                  onClick={() => setThinkingDropdownOpen((v) => !v)}
+                  onClick={() => {
+                    updateControlsMenuTop();
+                    setThinkingDropdownOpen((v) => !v);
+                  }}
                   title={isStreaming
                     ? t("chat.currentReasoning", { level: thinkingDisplayLabel })
                     : t("chat.changeReasoning", { level: thinkingDisplayLabel })}
@@ -2563,7 +2579,7 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
                   style={{
                     display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
                     padding: isMobile ? "0 6px" : "8px 12px",
-                    width: isMobile ? "100%" : undefined,
+                    width: isMobile ? "auto" : undefined,
                     height: 32,
                     background: thinkingDropdownOpen ? "var(--bg-hover)" : "none",
                     border: "none",
@@ -2591,18 +2607,25 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
                 </button>
                 {thinkingDropdownOpen && (
                   <div style={{
-                    position: "absolute", bottom: "calc(100% + 6px)",
-                    left: 0,
-                    right: 0,
+                    position: isMobile ? "fixed" : "absolute",
+                    ...(isMobile ? {
+                      left: 8,
+                      width: "calc(50vw - 8px)",
+                      maxWidth: "calc(50vw - 8px)",
+                      top: controlsMenuTop ? controlsMenuTop - 6 : undefined,
+                      bottom: controlsMenuTop ? undefined : "calc(env(safe-area-inset-bottom) + 52px)",
+                      transform: controlsMenuTop ? "translateY(-100%)" : undefined,
+                      maxHeight: "min(48vh, 320px)",
+                    } : {
+                      bottom: "calc(100% + 6px)",
+                      right: 0,
+                      minWidth: 180,
+                    }),
                     zIndex: 100, background: "var(--bg)", border: "1px solid var(--border)",
-                    borderRadius: isMobile
-                      ? (toolDropdownOpen ? "8px 0 0 8px" : 8)
-                      : 8,
-                    borderRight: isMobile && toolDropdownOpen ? "none" : "1px solid var(--border)",
+                    borderRadius: 8,
                     boxShadow: "0 -4px 16px rgba(0,0,0,0.10)",
                     overflow: "hidden",
-                    width: isMobile ? "100%" : undefined,
-                    minWidth: isMobile ? undefined : 180,
+                    overflowY: "auto",
                   }}>
                     {THINKING_LEVELS.filter((lvl) => {
                       if (!availableThinkingLevels) return true;
@@ -2659,16 +2682,21 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
               </div>
             )}
             {!isStreaming && onToolPresetChange && (
-              <div ref={toolDropdownRef} style={{ position: "relative", flex: isMobile ? "1 1 50%" : undefined, minWidth: 0 }}>
+              <div ref={toolDropdownRef} style={{ position: "relative" }}>
                 <button
-                  onClick={(e) => { if (!isStreaming && !isStrayClick(e)) setToolDropdownOpen((v) => !v); }}
+                  onClick={(e) => {
+                    if (!isStreaming && !isStrayClick(e)) {
+                      updateControlsMenuTop();
+                      setToolDropdownOpen((v) => !v);
+                    }
+                  }}
                   disabled={isStreaming}
                   title={t("chat.changeToolPreset") + `: ${toolPresetLabel}`}
                   aria-label={t("chat.changeToolPreset")}
                   style={{
                     display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
                     padding: isMobile ? "0 6px" : "8px 12px",
-                    width: isMobile ? "100%" : undefined,
+                    width: isMobile ? "auto" : undefined,
                     height: 32,
                     background: toolDropdownOpen ? "var(--bg-hover)" : "none",
                     border: "none",
@@ -2696,18 +2724,26 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
                 </button>
                 {toolDropdownOpen && (
                   <div style={{
-                    position: "absolute",
-                    bottom: "calc(100% + 6px)",
-                    left: 0,
-                    right: 0,
+                    position: isMobile ? "fixed" : "absolute",
+                    ...(isMobile ? {
+                      right: 8,
+                      left: "auto",
+                      width: "calc(50vw - 8px)",
+                      maxWidth: "calc(50vw - 8px)",
+                      top: controlsMenuTop ? controlsMenuTop - 6 : undefined,
+                      bottom: controlsMenuTop ? undefined : "calc(env(safe-area-inset-bottom) + 52px)",
+                      transform: controlsMenuTop ? "translateY(-100%)" : undefined,
+                      maxHeight: "min(48vh, 320px)",
+                    } : {
+                      bottom: "calc(100% + 6px)",
+                      right: 0,
+                      minWidth: 160,
+                    }),
                     zIndex: 100, background: "var(--bg)", border: "1px solid var(--border)",
-                    borderRadius: isMobile
-                      ? (thinkingDropdownOpen ? "0 8px 8px 0" : 8)
-                      : 8,
+                    borderRadius: 8,
                     boxShadow: "0 -4px 16px rgba(0,0,0,0.10)",
                     overflow: "hidden",
-                    width: isMobile ? "100%" : undefined,
-                    minWidth: isMobile ? undefined : 160,
+                    overflowY: "auto",
                   }}>
                     {TOOL_PRESETS.map((lvl) => {
                       const preset = TOOL_PRESET_MAP[lvl];
