@@ -15,7 +15,7 @@ export const LIGHT_THEMES: readonly ResolvedTheme[] = ["light"];
 export const DARK_THEMES: readonly ResolvedTheme[] = ["dark", "mocha", "lime"];
 
 /** Default theme preference: Catppuccin Mocha */
-export const DEFAULT_THEME_PREFERENCE: "mocha" = "mocha";
+export const DEFAULT_THEME_PREFERENCE = "mocha" as const;
 
 export function isThemePreference(value: unknown): value is ThemePreference {
   return THEME_OPTIONS.some((option) => option.id === value);
