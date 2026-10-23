@@ -2427,6 +2427,7 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
           gridTemplateColumns: isMobile ? "minmax(0, 1fr) auto" : undefined,
           alignItems: "center",
           gap: 6,
+          position: "relative",
         }}>
 
           {/* LEFT: attach + model selector (idle) or steer/followup toggle (streaming) */}
@@ -2484,7 +2485,7 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
             display: "flex",
             alignItems: "center",
             justifyContent: "flex-end",
-            position: "relative",
+            position: isMobile && controlsMenuOpen ? "static" : "relative",
             marginLeft: isMobile ? 0 : "auto",
           }}>
             {isMobile && (
@@ -2533,14 +2534,15 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
             <div style={{
               display: isMobile ? (controlsMenuOpen ? "flex" : "none") : "flex",
               alignItems: "center",
-              gap: isMobile ? 4 : 2,
+              gap: isMobile ? 0 : 2,
               ...(isMobile ? {
                 position: "absolute",
+                left: 0,
                 right: 0,
                 bottom: 0,
                 zIndex: 60,
-                padding: "2px 4px",
-                width: "min(360px, calc(100vw - 32px))",
+                padding: "2px",
+                width: "100%",
                 boxSizing: "border-box",
                 justifyContent: "space-between",
                 border: "1px solid color-mix(in srgb, var(--border) 72%, transparent)",
@@ -2591,12 +2593,16 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
                   <div style={{
                     position: "absolute", bottom: "calc(100% + 6px)",
                     left: 0,
+                    right: 0,
                     zIndex: 100, background: "var(--bg)", border: "1px solid var(--border)",
-                    borderRadius: 8, boxShadow: "0 -4px 16px rgba(0,0,0,0.10)",
+                    borderRadius: isMobile
+                      ? (toolDropdownOpen ? "8px 0 0 8px" : 8)
+                      : 8,
+                    borderRight: isMobile && toolDropdownOpen ? "none" : "1px solid var(--border)",
+                    boxShadow: "0 -4px 16px rgba(0,0,0,0.10)",
                     overflow: "hidden",
-                    width: isMobile ? "calc(50vw - 16px)" : undefined,
+                    width: isMobile ? "100%" : undefined,
                     minWidth: isMobile ? undefined : 180,
-                    maxWidth: isMobile ? "calc(50vw - 16px)" : 280,
                   }}>
                     {THINKING_LEVELS.filter((lvl) => {
                       if (!availableThinkingLevels) return true;
@@ -2692,13 +2698,16 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
                   <div style={{
                     position: "absolute",
                     bottom: "calc(100% + 6px)",
+                    left: 0,
                     right: 0,
                     zIndex: 100, background: "var(--bg)", border: "1px solid var(--border)",
-                    borderRadius: 8, boxShadow: "0 -4px 16px rgba(0,0,0,0.10)",
+                    borderRadius: isMobile
+                      ? (thinkingDropdownOpen ? "0 8px 8px 0" : 8)
+                      : 8,
+                    boxShadow: "0 -4px 16px rgba(0,0,0,0.10)",
                     overflow: "hidden",
-                    width: isMobile ? "calc(50vw - 16px)" : undefined,
+                    width: isMobile ? "100%" : undefined,
                     minWidth: isMobile ? undefined : 160,
-                    maxWidth: isMobile ? "calc(50vw - 16px)" : 280,
                   }}>
                     {TOOL_PRESETS.map((lvl) => {
                       const preset = TOOL_PRESET_MAP[lvl];
