@@ -15,6 +15,27 @@ const npm = process.platform === "win32" ? "npm.cmd" : "npm";
 const say = (msg) => process.stdout.write(`\x1b[36m▸\x1b[0m ${msg}\n`);
 const fail = (msg) => { process.stderr.write(`\x1b[31m✖\x1b[0m ${msg}\n`); process.exit(1); };
 
+// Auto-register `pi-app` in user's PATH (Termux / Linux) if available so `pi-app` works from anywhere.
+try {
+  if (process.platform !== "win32") {
+    const candidateDirs = [
+      process.env.PREFIX ? path.join(process.env.PREFIX, "bin") : null,
+      path.join(process.env.HOME || "", ".local", "bin"),
+    ].filter(Boolean);
+    for (const binDir of candidateDirs) {
+      if (existsSync(binDir)) {
+        const linkPath = path.join(binDir, "pi-app");
+        if (!existsSync(linkPath)) {
+          import("node:fs").then(({ symlinkSync }) => {
+            try { symlinkSync(path.join(root, "pi-app"), linkPath); } catch {}
+          });
+        }
+        break;
+      }
+    }
+  }
+} catch {}
+
 // Node version gate (pi needs >= 22.19).
 const [maj, min] = process.versions.node.split(".").map(Number);
 if (maj < 22 || (maj === 22 && min < 19)) {

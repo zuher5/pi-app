@@ -1468,13 +1468,13 @@
 .settings-section-tab {
   position: relative;
   display: flex;
-  flex: 0 0 96px;
+  flex: 0 1 auto;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  width: 96px;
+  gap: 6px;
+  min-width: 0;
   height: 100%;
-  padding: 0 2px;
+  padding: 0 10px;
   border: 0;
   outline: none;
   background: transparent;
@@ -1609,8 +1609,8 @@
    (six columns each), a row of three wide tiles (ten each), and Pi-App's two (fifteen each). */
 .settings-theme-options {
   display: grid;
-  grid-template-columns: repeat(30, minmax(0, 1fr));
-  grid-auto-rows: 40px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 44px;
   gap: 10px;
   max-width: 428px;
   padding: 4px;
@@ -1619,22 +1619,10 @@
 .settings-theme-option {
   position: relative;
   display: flex;
-  grid-column: span 6;
   min-width: 0;
+  height: 44px;
   border-radius: 9px;
   cursor: pointer;
-}
-
-.settings-theme-option[data-system] {
-  grid-column: 1 / -1;
-}
-
-.settings-theme-option[data-wide] {
-  grid-column: span 10;
-}
-
-.settings-theme-option[data-half] {
-  grid-column: span 15;
 }
 
 .settings-theme-swatch {
@@ -1966,7 +1954,7 @@
   font-size: 11px;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .config-add-source-example.has-label {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -1982,7 +1970,7 @@
 
   .config-sidebar {
     width: 100%;
-    height: 190px;
+    height: 180px;
     border-right: 0;
     border-bottom: 1px solid var(--border);
   }
@@ -2024,6 +2012,23 @@
     background: var(--bg-panel);
     color: var(--text);
     font-size: 16px;
+  }
+
+  .enabled-models-row-id {
+    white-space: normal;
+    word-break: break-all;
+    overflow-wrap: anywhere;
+  }
+
+  .config-detail-path {
+    white-space: normal;
+    word-break: break-all;
+    overflow-wrap: anywhere;
+  }
+
+  .config-field.is-horizontal {
+    grid-template-columns: 1fr;
+    gap: 6px;
   }
 }
 

@@ -1515,7 +1515,7 @@ export function ChatWindow({ session, searchTarget, onSearchTargetHandled, initi
           commandsDisabled={sessionBusy}
         />
       </div>
-      {isEmptyNew && <div className="pa-empty-tail min-h-0 flex-1" />}
+      {isEmptyNew && <div className="min-h-0 flex-1" />}
     </div>
   );
 }

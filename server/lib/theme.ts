@@ -1,22 +1,21 @@
-// Pi-App: dark palettes only, listed in Settings in this order. pi-web's light,
-// high-contrast and Pine palettes are left out (their CSS stays, unused).
+// Settings shows these as 4 proportional swatches in a 2x2 grid:
+// Row 1: System (auto dark/light), Light
+// Row 2: Catppuccin Mocha (default), Lime
 export const THEME_OPTIONS = [
-  { id: "dark", label: "settings.themeDark", scheme: "dark" },
+  { id: "auto", label: "settings.themeSystem", scheme: null },
+  { id: "light", label: "settings.themeLight", scheme: "light" },
   { id: "mocha", label: "settings.themeMocha", scheme: "dark" },
   { id: "lime", label: "settings.themeLime", scheme: "dark" },
-  { id: "dusk", label: "settings.themeDusk", scheme: "dark" },
-  { id: "ember", label: "settings.themeEmber", scheme: "dark" },
-  { id: "slate", label: "settings.themeSlate", scheme: "dark" },
-  { id: "zenburn", label: "settings.themeZenburn", scheme: "dark" },
 ] as const;
 
 export type ThemePreference = (typeof THEME_OPTIONS)[number]["id"];
-export type ResolvedTheme = ThemePreference;
+export type ResolvedTheme = "light" | "dark" | "mocha" | "lime";
 
-export const DARK_THEMES: readonly ResolvedTheme[] = THEME_OPTIONS.flatMap((option) => (option.scheme === "dark" ? [option.id] : []));
+export const LIGHT_THEMES: readonly ResolvedTheme[] = ["light"];
+export const DARK_THEMES: readonly ResolvedTheme[] = ["dark", "mocha", "lime"];
 
-/** Pi-App: a browser with no saved choice opens in Catppuccin Mocha. */
-export const DEFAULT_THEME_PREFERENCE: ThemePreference = "mocha";
+/** Default theme preference: Catppuccin Mocha */
+export const DEFAULT_THEME_PREFERENCE: "mocha" = "mocha";
 
 export function isThemePreference(value: unknown): value is ThemePreference {
   return THEME_OPTIONS.some((option) => option.id === value);
@@ -27,4 +26,6 @@ export function isDarkTheme(theme: ResolvedTheme): boolean {
 }
 
 // Apply the saved palette before first paint, including when storage is blocked.
-export const THEME_INIT_SCRIPT = `(function(){var t=${JSON.stringify(DEFAULT_THEME_PREFERENCE)};try{var s=localStorage.getItem("pi-theme");if(${JSON.stringify(THEME_OPTIONS.map((option) => option.id))}.includes(s))t=s}catch(e){}var r=document.documentElement;r.dataset.theme=t;r.classList.toggle("dark",${JSON.stringify(DARK_THEMES)}.includes(t))})();`;
+// System auto resolves to "dark" (standard dark mode) on dark OS preference, and "light" on light OS.
+export const THEME_INIT_SCRIPT = `(function(){var t=${JSON.stringify(DEFAULT_THEME_PREFERENCE)};try{var s=localStorage.getItem("pi-theme");if(${JSON.stringify(THEME_OPTIONS.map((option) => option.id))}.includes(s))t=s}catch(e){}if(t==="auto")t=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";var r=document.documentElement;r.dataset.theme=t;r.classList.toggle("dark",${JSON.stringify(DARK_THEMES)}.includes(t))})();`;
+

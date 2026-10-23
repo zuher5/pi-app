@@ -5,26 +5,19 @@ The [pi coding agent](https://github.com/earendil-works/pi) on your phone, in th
 - `server/`: a fork of [agegr/pi-web](https://github.com/agegr/pi-web) (MIT). Agent, sessions, files, git, terminal, models, MCP and skills behave exactly as in pi-web. Pi-App adds:
   - the `pi-app` launcher, which prints a pairing QR;
   - browser pairing: the QR opens `/pair#t=<token>`, which trades the token for a sign-in cookie (90 days, revoked by rotating the token);
-  - phone fixes on touch screens (`app/pi-app.css`): 44px touch targets, composer in thumb reach on an empty session, a shorter composer hint;
-  - dark themes only: Dark, Catppuccin Mocha (default), Lime, Dusk, Ember, Slate, Zenburn, as one quiet list in Settings → Appearance (pi-web's light, high-contrast and Pine themes are removed).
+  - custom themes: 4 clean, proportional swatches in a 2x2 grid (System [standard dark/light], Light, Catppuccin Mocha [default], and Lime), with fluid responsive layouts in settings and configure panels.
 
 The earlier Android app (Svelte + Capacitor) is kept on the `archive/svelte` branch and tag `v0.6.1`.
 
 ## Run
 
-Needs Node.js 22.19+ and git. One command, on PC or in Termux:
-
-Linux, macOS, Termux:
+Needs Node.js 22.19+ and git. One unified command on Linux, Termux, and Windows:
 
     git clone https://github.com/zuher5/pi-app.git
     cd pi-app
-    ./pi-app
+    pi-app
 
-Windows (PowerShell or cmd):
-
-    git clone https://github.com/zuher5/pi-app.git
-    cd pi-app
-    .\pi-app.cmd
+*(Tip: run `npm link` inside the repo once to make `pi-app` available from any folder on your system).*
 
 The first run installs dependencies and builds the server (a few minutes); later runs start in seconds and rebuild only after `git pull`. It prints a QR: scan it with the phone's camera and the link opens pi in the browser. Add it to the home screen from the browser menu for a full-screen app.
 

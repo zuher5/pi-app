@@ -23,6 +23,11 @@ function emit(): void {
   listeners.forEach((cb) => cb());
 }
 
+function getSystemTheme(): ResolvedTheme {
+  if (typeof window === "undefined") return "dark";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
 function readStoredPreference(): ThemePreference {
   try {
     const value = localStorage.getItem(STORAGE_KEY);
@@ -33,9 +38,8 @@ function readStoredPreference(): ThemePreference {
   return DEFAULT_THEME_PREFERENCE;
 }
 
-// Pi-App ships dark palettes only, so a preference is the palette itself.
 function resolveTheme(preference: ThemePreference): ResolvedTheme {
-  return preference;
+  return preference === "auto" ? getSystemTheme() : preference;
 }
 
 function applyDomTheme(theme: ResolvedTheme): void {
@@ -68,9 +72,32 @@ function setThemeState(preference: ThemePreference, theme: ResolvedTheme, persis
   emit();
 }
 
+function syncAutoThemeFromSystem(): void {
+  const current = ensureState();
+  if (current.preference !== "auto") return;
+  const theme = getSystemTheme();
+  if (theme === current.theme) return;
+  setThemeState("auto", theme, false);
+}
+
+function ensureSystemListener(): void {
+  if (systemListening || typeof window === "undefined" || !window.matchMedia) return;
+
+  const mql = window.matchMedia("(prefers-color-scheme: dark)");
+  mql.addEventListener("change", syncAutoThemeFromSystem);
+  // Some browsers delay or miss scheme events while backgrounded.
+  window.addEventListener("focus", syncAutoThemeFromSystem);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") syncAutoThemeFromSystem();
+  });
+  systemListening = true;
+}
+
 function subscribe(cb: () => void): () => void {
   listeners.add(cb);
   ensureState();
+  ensureSystemListener();
+  syncAutoThemeFromSystem();
   return () => {
     listeners.delete(cb);
   };
