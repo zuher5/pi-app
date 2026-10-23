@@ -13,6 +13,14 @@
   import { nav, runBack } from "$lib/nav.svelte";
 
   let pairLink = $state("");
+  // Wide screens (tablet, desktop) keep the session list docked beside the content.
+  const wideQuery = typeof matchMedia !== "undefined" ? matchMedia("(min-width: 900px)") : null;
+  let wide = $state(wideQuery?.matches ?? false);
+  $effect(() => {
+    const on = (e: MediaQueryListEvent) => { wide = e.matches; if (e.matches) nav.drawer = false; };
+    wideQuery?.addEventListener("change", on);
+    return () => wideQuery?.removeEventListener("change", on);
+  });
 
   $effect(() => {
     void restoreConnection();
@@ -45,7 +53,8 @@
     <Pair initialLink={pairLink} onpaired={() => (pairLink = "")} />
   {/key}
 {:else}
-  <div class="shell">
+  <div class="shell" class:wide>
+    {#if wide}<Drawer docked />{/if}
     <div class="content">
       {#if nav.tab === "chat"}<Chat />
       {:else if nav.tab === "files"}<Files />
@@ -53,12 +62,14 @@
       {:else}<Settings />{/if}
     </div>
   </div>
-  {#if nav.drawer}<Drawer />{/if}
+  {#if nav.drawer && !wide}<Drawer />{/if}
   <Overlays />
 {/if}
 
 <style>
   .splash { height: 100%; display: grid; place-items: center; }
   .shell { height: 100%; display: flex; flex-direction: column; }
-  .content { flex: 1; min-height: 0; }
+  .content { flex: 1; min-height: 0; min-width: 0; }
+  .shell.wide { flex-direction: row; }
+  .shell.wide :global(.menu-btn) { display: none; }
 </style>

@@ -16,10 +16,10 @@
   import MessageActions from "../components/MessageActions.svelte";
   import {
     iOffline, iClose, iModel, iBranch, iEdit, iMenu, iEditNew, iExpand, iFiles, iTerminal, iFolderPlus,
-    iExplore, iPlan, iBug, iReview, iTest, iExplain, iThinking, iPlus,
+    iExplore, iPlan, iBug, iReview, iTest, iExplain, iThinking, iPlus, iBuild,
   } from "../icons";
   import { t, thinkLabel } from "../i18n.svelte";
-  import { live } from "../store/session.svelte";
+  import { live, cleanTitle } from "../store/session.svelte";
   import { picked } from "../store/project.svelte";
   import { nav, toast, confirmDialog } from "../nav.svelte";
   import { api, files } from "../api";
@@ -35,6 +35,13 @@
   let starting = $state(false);
   let recent = $state<string[]>([]);
   let customDir = $state("");
+  let defaultModel = $state<{ provider: string; modelId: string } | null>(null);
+  $effect(() => {
+    const dir = picked.cwd;
+    if (!live.id && dir) void api.models(dir).then((m) => (defaultModel = m.defaultModel)).catch(() => {});
+  });
+  const shownModel = $derived(live.id ? live.model : (live.pendingModel ?? defaultModel));
+  const shownThinking = $derived(live.id ? live.thinkingLevel : (live.pendingThinking ?? "off"));
 
   $effect(() => {
     void api.sessions().then(({ sessions }) => {
@@ -70,7 +77,7 @@
   const accent = $derived(projectAccent(live.info?.projectKey ?? live.info?.projectRoot ?? cwd));
   const title = $derived.by(() => {
     const i = live.info;
-    const first = i?.firstMessage && i.firstMessage !== "(no messages)" ? i.firstMessage.split("\n")[0] : "";
+    const first = i?.firstMessage && i.firstMessage !== "(no messages)" ? cleanTitle(i.firstMessage) : "";
     return i?.name || first || t("new.title");
   });
   const hero = $derived(!live.id || (!live.loading && visible.length === 0 && !live.stream.streamingMessage && !live.running));
@@ -157,7 +164,7 @@
 
 <div class="screen" style:--accent={accent}>
   <header class="bar">
-    <button class="icon-btn" onclick={() => (nav.drawer = true)} aria-label={t("nav.menu")}><Icon path={iMenu} /></button>
+    <button class="icon-btn menu-btn" onclick={() => (nav.drawer = true)} aria-label={t("nav.menu")}><Icon path={iMenu} /></button>
     {#if live.id}
       <button class="title" onclick={() => (sheet = "menu")} aria-haspopup="dialog">
         <span class="t title-m">{title}</span><Icon path={iExpand} size={18} />
@@ -186,7 +193,7 @@
         <div class="center"><Rosette state="connecting" size={40} /></div>
       {:else if hero}
         <div class="welcome">
-          <h2 class="ask">{t("hero.ask")} {#if project}<span class="pj">{t("hero.in")} <strong>{project}</strong></span>{/if}?</h2>
+          <h2 class="ask">{t("hero.ask")}{#if project}{" "}<span class="pj">{t("hero.in")} <strong>{project}</strong></span>{/if}?</h2>
           <div class="sugs">
             {#each suggestions as s (s.label)}
               <button class="sug body-m" onclick={() => { draft = s.prompt; composer?.focus(); }}><Icon path={s.icon} size={16} />{s.label}</button>
@@ -233,15 +240,18 @@
       {/if}
     {/snippet}
     {#snippet left()}
-      {#if live.id}
-        <button type="button" class="chip label-l" onclick={() => (sheet = "model")} aria-haspopup="dialog">
-          <Icon path={iModel} size={16} /><span class="mname">{live.model?.modelId ?? "—"}</span>
-        </button>
-      {/if}
+      <button type="button" class="chip mode label-l" class:plan={live.mode === "plan"} aria-pressed={live.mode === "plan"}
+        aria-label={t("mode.toggle", { mode: live.mode === "plan" ? t("mode.plan") : t("mode.build") })}
+        onclick={() => live.setMode(live.mode === "plan" ? "build" : "plan")}>
+        <Icon path={live.mode === "plan" ? iPlan : iBuild} size={16} />{live.mode === "plan" ? t("mode.plan") : t("mode.build")}
+      </button>
+      <button type="button" class="chip label-l" onclick={() => (sheet = "model")} aria-haspopup="dialog" disabled={!cwd}>
+        <Icon path={iModel} size={16} /><span class="mname">{shownModel?.modelId ?? t("model.title")}</span>
+      </button>
     {/snippet}
     {#snippet right()}
-      {#if live.id && live.thinkingLevel !== "off"}
-        <button type="button" class="chip think label-l" onclick={() => (sheet = "model")}><Icon path={iThinking} size={16} />{thinkLabel(live.thinkingLevel)}</button>
+      {#if shownThinking !== "off"}
+        <button type="button" class="chip think label-l" onclick={() => (sheet = "model")} aria-label={t("model.thinking")}><Icon path={iThinking} size={16} />{thinkLabel(shownThinking)}</button>
       {/if}
     {/snippet}
   </Composer>
@@ -305,7 +315,7 @@
   .ask strong { font-weight: 500; color: var(--accent); }
   .sugs { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 420px; }
   .sug {
-    display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 14px 0 12px; border-radius: 18px; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px 0 12px; border-radius: 20px; cursor: pointer;
     border: 0; background: var(--md-surface-container); color: var(--md-on-surface); box-shadow: inset 0 0 0 1px var(--md-outline-variant);
   }
   .sug :global(svg) { color: var(--md-on-surface-variant); }
@@ -318,20 +328,24 @@
   .editing { background: var(--md-secondary-container); color: var(--md-on-secondary-container); margin-bottom: 4px; }
 
   .ctx {
-    display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 8px; border: 0; background: none; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 8px; border: 0; background: none; cursor: pointer;
     color: var(--md-on-surface); border-radius: var(--radius-s); flex: none; white-space: nowrap;
   }
   .ctx :global(svg) { color: var(--md-on-surface-variant); }
   .ctx.static { cursor: default; color: var(--md-on-surface-variant); font-family: var(--font-mono); font-size: 0.75rem; }
   .sw { width: 8px; height: 8px; border-radius: 2px; background: var(--accent); }
   .chip {
-    display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 10px 0 8px; border: 0; background: none; cursor: pointer;
-    border-radius: 18px; color: var(--md-on-surface); min-width: 0;
+    display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 10px 0 8px; border: 0; background: none; cursor: pointer;
+    border-radius: 22px; color: var(--md-on-surface); min-width: 0;
   }
   .chip:hover { background: color-mix(in oklab, var(--md-on-surface) 8%, transparent); }
   .chip :global(svg) { color: var(--md-on-surface-variant); flex: none; }
   .mname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-  .think { color: var(--md-primary); } .think :global(svg) { color: var(--md-primary); }
+  .think { color: var(--md-on-surface-variant); padding: 0 8px; }
+  .mode { flex: none; color: var(--ctp-green); font-weight: 500; }
+  .mode :global(svg) { color: currentColor; }
+  .mode.plan { color: var(--ctp-blue); }
+  .chip:disabled { opacity: 0.38; cursor: default; }
   .n { font-size: 0.6875rem; padding: 0 6px; border-radius: 8px; background: var(--md-primary); color: var(--md-on-primary); line-height: 16px; margin-left: 4px; }
 
   .sub { margin: -6px 12px 8px; color: var(--md-on-surface-variant); font-family: var(--font-mono); word-break: break-all; }

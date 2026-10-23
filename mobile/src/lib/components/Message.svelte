@@ -3,6 +3,7 @@
   import Icon from "./Icon.svelte";
   import { iThinking, iExpand, iError, iCopy, iCheck } from "../icons";
   import { duration } from "../time";
+  import { PLAN_PREFIX } from "../store/session.svelte";
   import { renderMarkdown } from "../markdown";
   import { t } from "../i18n.svelte";
   import type { AgentMessage, ToolResultMessage } from "@pi/types";
@@ -30,11 +31,13 @@
       ? typeof message.content === "string" ? message.content : message.content.map((b) => (b.type === "text" ? b.text : "")).join("")
       : "",
   );
+  const planned = $derived(message.role === "user" && userText.startsWith(PLAN_PREFIX.trim()));
+  const shownText = $derived(planned ? userText.slice(PLAN_PREFIX.trim().length).trim() : userText);
 </script>
 
 {#if message.role === "user"}
   <div class="user">
-    <button class="bubble body-l" onclick={() => onactions?.(userText)} aria-haspopup="dialog">{userText}</button>
+    <button class="bubble body-l" onclick={() => onactions?.(shownText)} aria-haspopup="dialog">{#if planned}<span class="plan label-s">Plan</span>{/if}{shownText}</button>
   </div>
 {:else if message.role === "assistant"}
   <div class="assistant" class:streaming>
@@ -71,11 +74,12 @@
     padding: 10px 16px; border-radius: 18px 18px 6px 18px; white-space: pre-wrap; word-break: break-word;
     border: 0; font: inherit; text-align: left; cursor: pointer; min-height: 44px; user-select: text;
   }
+  .plan { display: block; width: fit-content; margin-bottom: 4px; padding: 0 8px; border-radius: 6px; background: color-mix(in oklab, var(--ctp-blue) 18%, transparent); color: var(--ctp-blue); }
   .bubble:active { filter: brightness(0.96); }
   .assistant { display: grid; gap: 10px; min-width: 0; }
   .foot { display: flex; align-items: center; gap: 8px; color: var(--md-on-surface-variant); margin-top: -2px; }
   .meta { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: 0; }
-  .copy { margin-left: auto; width: 36px; height: 36px; border: 0; border-radius: 50%; background: none; color: inherit; display: grid; place-items: center; cursor: pointer; flex: none; }
+  .copy { margin-left: auto; width: 44px; height: 44px; margin-right: -10px; border: 0; border-radius: 50%; background: none; color: inherit; display: grid; place-items: center; cursor: pointer; flex: none; }
   .copy:hover { background: color-mix(in oklab, var(--md-on-surface) 8%, transparent); }
   .md { word-break: break-word; overflow-wrap: anywhere; line-height: 1.625rem; }
   .md :global(:not(pre) > code) { color: var(--ctp-green); }

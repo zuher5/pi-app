@@ -66,9 +66,9 @@
 
 <style>
   .composer { padding: 4px 12px calc(var(--safe-bottom) + 12px); flex: none; }
-  .above { display: flex; gap: 4px; max-width: 840px; margin: 0 auto 6px; overflow-x: auto; scrollbar-width: none; }
+  .above { display: flex; gap: 4px; max-width: 760px; margin: 0 auto 6px; overflow-x: auto; scrollbar-width: none; }
   .card {
-    max-width: 840px; margin: 0 auto; border-radius: 22px; padding: 4px 6px 6px;
+    max-width: 760px; margin: 0 auto; border-radius: 22px; padding: 4px 6px 6px;
     background: var(--md-surface-container); box-shadow: inset 0 0 0 1px var(--md-outline-variant);
     transition: box-shadow var(--dur-short);
   }
@@ -78,18 +78,18 @@
     padding: 12px 12px 6px; min-height: 48px; max-height: 200px; font-family: var(--font-sans);
   }
   textarea::placeholder { color: var(--md-on-surface-variant); opacity: 0.8; }
-  .row { display: flex; align-items: center; gap: 2px; min-height: 40px; }
+  .row { display: flex; align-items: center; gap: 2px; min-height: 44px; }
   .left { flex: 1; min-width: 0; display: flex; align-items: center; gap: 2px; overflow: hidden; }
   .right { display: flex; align-items: center; gap: 2px; flex: none; }
   .tool {
-    width: 40px; height: 40px; border-radius: 50%; border: 0; background: none; display: grid; place-items: center; flex: none;
+    width: 44px; height: 44px; border-radius: 50%; border: 0; background: none; display: grid; place-items: center; flex: none;
     color: var(--md-on-surface-variant); cursor: pointer;
   }
   .tool:hover { background: color-mix(in oklab, var(--md-on-surface) 8%, transparent); }
   .tool:disabled { opacity: 0.38; }
   .stop { color: var(--md-error); }
   .send {
-    width: 40px; height: 40px; border-radius: 50%; border: 0; display: grid; place-items: center; cursor: pointer; flex: none; margin-left: 2px;
+    width: 44px; height: 44px; border-radius: 50%; border: 0; display: grid; place-items: center; cursor: pointer; flex: none; margin-left: 4px;
     background: var(--md-primary); color: var(--md-on-primary); transition: opacity var(--dur-short), transform var(--dur-short) var(--ease-emph);
   }
   .send:disabled { background: var(--md-surface-container-highest); color: var(--md-on-surface-variant); opacity: 0.7; cursor: default; }

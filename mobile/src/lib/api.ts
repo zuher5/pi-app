@@ -120,3 +120,29 @@ export const terminal = {
   resize: (id: string, cols: number, rows: number) => json(`/api/terminal/${id}`, post({ type: "resize", cols, rows })),
   close: (id: string) => json(`/api/terminal/${id}`, { method: "DELETE" }),
 };
+
+// ---- Providers & models (Settings) ----
+
+export interface ApiKeyProvider { id: string; displayName: string; configured: boolean; source?: string; modelCount: number; supportsOAuth: boolean }
+export interface OAuthProvider { id: string; name: string; loggedIn: boolean; supportsApiKey: boolean }
+export interface CustomModel { id: string; name?: string; reasoning?: boolean; contextWindow?: number; maxTokens?: number; [k: string]: unknown }
+export interface CustomProvider { baseUrl?: string; api?: string; apiKey?: string; models?: CustomModel[]; [k: string]: unknown }
+export interface ModelsConfig { providers: Record<string, CustomProvider>; [k: string]: unknown }
+export const API_KINDS = ["openai-completions", "openai-responses", "anthropic-messages", "google-generative-ai"] as const;
+
+const put = (body: unknown): RequestInit => ({ method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+
+export const providers = {
+  list: () => json<{ oauthProviders: OAuthProvider[]; apiKeyProviders: ApiKeyProvider[] }>("/api/auth/providers"),
+  setKey: (id: string, apiKey: string) => json(`/api/auth/api-key/${encodeURIComponent(id)}`, post({ apiKey })),
+  removeKey: (id: string) => json(`/api/auth/api-key/${encodeURIComponent(id)}`, { method: "DELETE" }),
+  logout: (id: string) => json(`/api/auth/logout/${encodeURIComponent(id)}`, { method: "POST" }),
+  /** OAuth runs as an SSE stream; the app answers its prompts through answer(). */
+  loginUrl: (id: string) => `/api/auth/login/${encodeURIComponent(id)}`,
+  answer: (id: string, token: string, code: string) => json(`/api/auth/login/${encodeURIComponent(id)}`, post({ token, code })),
+  config: () => json<ModelsConfig>("/api/models-config"),
+  saveConfig: (cfg: ModelsConfig) => json("/api/models-config", put(cfg)),
+  discover: (providerName: string, provider: CustomProvider) =>
+    json<{ models: CustomModel[]; endpoint: string }>("/api/models-config/discover", post({ providerName, provider })),
+  setDefault: (cwd: string, provider: string, modelId: string) => json("/api/models/default", put({ cwd, provider, modelId })),
+};

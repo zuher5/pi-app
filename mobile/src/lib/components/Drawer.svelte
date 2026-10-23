@@ -7,11 +7,13 @@
   import { api, ApiError, type ListedSession } from "../api";
   import { projectAccent } from "../theme.svelte";
   import { relTime, basename, parseTime } from "../time";
-  import { live } from "../store/session.svelte";
+  import { live, cleanTitle } from "../store/session.svelte";
   import { picked } from "../store/project.svelte";
   import { conn } from "../store/connection.svelte";
   import { nav, onBack, type Tab } from "../nav.svelte";
 
+  /** Docked: a permanent side column on wide screens (tablet, desktop) instead of an overlay. */
+  let { docked = false }: { docked?: boolean } = $props();
   let sessions = $state<ListedSession[]>([]);
   let running = $state<Set<string>>(new Set());
   let loading = $state(true);
@@ -36,7 +38,7 @@
     const timer = setInterval(() => {
       if (document.visibilityState === "visible") void api.running().then((r) => (running = new Set(r.runningSessionIds))).catch(() => {});
     }, 5000);
-    const off = onBack(() => { nav.drawer = false; return true; });
+    const off = docked ? () => {} : onBack(() => { nav.drawer = false; return true; });
     return () => { clearInterval(timer); off(); };
   });
 
@@ -56,8 +58,7 @@
   });
 
   function title(s: ListedSession): string {
-    const raw = s.name || (s.firstMessage === "(no messages)" ? "" : s.firstMessage);
-    return raw?.split("\n")[0] || t("new.title");
+    return s.name || cleanTitle(s.firstMessage === "(no messages)" ? "" : s.firstMessage) || t("new.title");
   }
   function open(s: ListedSession) {
     nav.drawer = false;
@@ -76,8 +77,8 @@
   }
 </script>
 
-<div class="scrim" onclick={() => (nav.drawer = false)} role="presentation"></div>
-<aside class="drawer" aria-label={t("nav.sessions")}>
+{#if !docked}<div class="scrim" onclick={() => (nav.drawer = false)} role="presentation"></div>{/if}
+<aside class="drawer" class:docked aria-label={t("nav.sessions")}>
   <header>
     <span class="brand title-m">Pi-App</span>
     <button class="icon-btn" aria-label={t("sessions.new")} onclick={() => fresh()}><Icon path={iEditNew} /></button>
@@ -168,6 +169,7 @@
   .tool.on { background: var(--md-secondary-container); }
   .server { display: flex; align-items: center; gap: 8px; margin: 6px 12px 0; color: var(--md-on-surface-variant); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--md-success); flex: none; }
+  .drawer.docked { position: relative; z-index: auto; width: 300px; flex: none; border-radius: 0; animation: none; box-shadow: inset -1px 0 0 var(--md-outline-variant); }
   @keyframes slide { from { transform: translateX(-100%); } }
   @keyframes fade { from { opacity: 0; } }
 </style>

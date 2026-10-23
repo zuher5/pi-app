@@ -15,6 +15,20 @@ export type ToolRun = { state: "running" | "done" | "error"; output?: string };
 
 type Event = Record<string, unknown> & { type: string };
 
+/** Plan mode: the prompt carries this line and the session keeps only read-only tools. */
+export const PLAN_PREFIX = "[Plan mode] Research and propose a plan only. Do not edit files or run commands that change anything.\n\n";
+const WRITES = /(write|edit|bash|exec|run|delete|remove|create|apply|patch|shell|move|rename|install|commit|push)/i;
+const READS = /(^read$|^ls$|^grep$|^find$|read|list|get|search|fetch|view|glob)/i;
+export function isReadOnlyTool(name: string): boolean {
+  return READS.test(name) && !WRITES.test(name);
+}
+export type Mode = "build" | "plan";
+/** A session's first line for titles, without the Plan instruction. */
+export function cleanTitle(text: string | undefined): string {
+  const raw = (text ?? "").startsWith(PLAN_PREFIX.trim()) ? (text ?? "").slice(PLAN_PREFIX.trim().length) : (text ?? "");
+  return raw.trim().split("\n")[0] ?? "";
+}
+
 function userKey(m: AgentMessage): string {
   if (m.role !== "user") return "";
   const c = m.content;
@@ -50,6 +64,12 @@ export class LiveSession {
   notice = $state<string | null>(null);
   pendingUi = $state<Event[]>([]);
   loading = $state(false);
+  /** Build or Plan, kept across sessions like a composer setting. */
+  mode = $state<Mode>((typeof localStorage !== "undefined" && localStorage.getItem("piapp.mode") === "plan") ? "plan" : "build");
+  /** Model and thinking picked on the home screen, applied when its session starts. */
+  pendingModel = $state<{ provider: string; modelId: string } | null>(null);
+  pendingThinking = $state<string | null>(null);
+  private savedTools = new Map<string, string[]>();
   /** Session totals from the snapshot, and the live context window fill from get_state. */
   stats = $state<SessionSnapshot["stats"] | null>(null);
   contextUsage = $state<{ percent: number | null; contextWindow: number; tokens: number | null } | null>(null);
@@ -123,7 +143,37 @@ export class LiveSession {
   async startIn(cwd: string, text: string): Promise<void> {
     const { sessionId } = await api.newSession(cwd);
     await this.open(sessionId);
+    if (this.pendingModel) await this.setModel(this.pendingModel.provider, this.pendingModel.modelId).catch(() => {});
+    if (this.pendingThinking) await this.setThinking(this.pendingThinking).catch(() => {});
+    this.pendingModel = null;
+    this.pendingThinking = null;
     await this.send(text);
+  }
+
+  setMode(mode: Mode): void {
+    this.mode = mode;
+    localStorage.setItem("piapp.mode", mode);
+  }
+
+  /** Plan withdraws every tool that can change the project; Build gives them back. */
+  private async applyMode(): Promise<void> {
+    const id = this.id;
+    if (!id) return;
+    const res = await api.command<{ name: string; active: boolean }[]>(id, { type: "get_tools" }).catch(() => null);
+    const tools = res?.data;
+    if (!Array.isArray(tools)) return;
+    const active = tools.filter((x) => x.active).map((x) => x.name);
+    if (this.mode === "plan") {
+      const writable = active.filter((n) => !isReadOnlyTool(n));
+      if (!writable.length) return;
+      this.savedTools.set(id, [...new Set([...(this.savedTools.get(id) ?? []), ...active])]);
+      await api.command(id, { type: "set_tools", toolNames: active.filter(isReadOnlyTool) });
+    } else {
+      const saved = this.savedTools.get(id);
+      if (!saved) return;
+      this.savedTools.delete(id);
+      await api.command(id, { type: "set_tools", toolNames: [...new Set([...active, ...saved])] });
+    }
   }
 
   async loadOlder(): Promise<void> {
@@ -323,8 +373,9 @@ export class LiveSession {
   }
 
   async send(text: string, mode: "auto" | "steer" | "followUp" = "auto"): Promise<void> {
-    const message = text.trim();
-    if (!message || !this.id) return;
+    const raw = text.trim();
+    if (!raw || !this.id) return;
+    const message = (this.mode === "plan" && !raw.startsWith(PLAN_PREFIX.trim()) ? PLAN_PREFIX : "") + raw;
     this.notice = null;
     if (this.editing && !this.running) {
       // Navigate and prompt are two calls, as on the web: branch first, then send.
@@ -335,6 +386,7 @@ export class LiveSession {
         return;
       }
     }
+    if (!this.running) await this.applyMode().catch(() => {});
     if (this.running) {
       await api.command(this.id, { type: "prompt", message, streamingBehavior: mode === "followUp" ? "followUp" : "steer" });
       return;

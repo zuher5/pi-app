@@ -11,7 +11,7 @@
   {#if onback}
     <button class="icon-btn" onclick={onback} aria-label="Back"><Icon path={iBack} /></button>
   {:else if !lead}
-    <button class="icon-btn" onclick={() => (nav.drawer = true)} aria-label={t("nav.menu")}><Icon path={iMenu} /></button>
+    <button class="icon-btn menu-btn" onclick={() => (nav.drawer = true)} aria-label={t("nav.menu")}><Icon path={iMenu} /></button>
   {/if}
   {@render lead?.()}
   <div class="titles">
