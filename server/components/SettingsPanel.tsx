@@ -213,44 +213,26 @@ function GeneralSettings({ sessionId, onSessionReloaded, quoteSelectionEnabled, 
     <div className="settings-general">
       <section className="settings-general-section">
         <h3 className="settings-general-heading">{t("settings.appearance")}</h3>
-        <div role="radiogroup" aria-label={t("settings.appearance")} className="settings-theme-options">
-          {THEME_OPTIONS.map((option) => {
-            const selected = preference === option.id;
-            return (
-              <label
-                key={option.id}
-                className="settings-theme-option"
-                data-system={option.id === "auto" || undefined}
-                data-wide={option.id === "contrast-light" || option.id === "contrast-dark" || option.id === "zenburn" || undefined}
-                data-half={option.id === "mocha" || option.id === "lime" || undefined}
-              >
-                <input
-                  type="radio"
-                  name="theme"
-                  value={option.id}
-                  checked={selected}
-                  onChange={() => setThemePreference(option.id)}
-                  className="sr-only"
-                />
-                {/* A data-theme span paints with that theme's own variables. System is a switch, not a
-                    palette: a neutral tile with a light and a dark chip beside its name. */}
-                {option.id === "auto" ? (
-                  <span className="settings-theme-swatch settings-theme-system" aria-hidden="true">
-                    <span data-theme="light" className="settings-theme-chip" />
-                    <span data-theme="dark" className="settings-theme-chip" />
-                    <span className="settings-theme-system-name">{t(option.label)}</span>
-                  </span>
-                ) : (
-                  <span className="settings-theme-swatch" aria-hidden="true">
-                    <span data-theme={option.id} className="settings-theme-fill">
-                      <span className="settings-theme-name">{t(option.label)}</span>
-                    </span>
-                  </span>
-                )}
-                <span className="sr-only">{t(option.label)}</span>
-              </label>
-            );
-          })}
+        {/* Pi-App: one quiet list. Each row shows the palette in a small chip
+            (its background with its accent dot); only the check marks the choice. */}
+        <div role="radiogroup" aria-label={t("settings.appearance")} className="pa-theme-list">
+          {THEME_OPTIONS.map((option) => (
+            <label key={option.id} className="pa-theme-row">
+              <input
+                type="radio"
+                name="theme"
+                value={option.id}
+                checked={preference === option.id}
+                onChange={() => setThemePreference(option.id)}
+                className="sr-only"
+              />
+              <span data-theme={option.id} className="pa-theme-chip" aria-hidden="true" />
+              <span className="pa-theme-name">{t(option.label)}</span>
+              <svg className="pa-theme-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </label>
+          ))}
         </div>
       </section>
 

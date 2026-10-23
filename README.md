@@ -6,7 +6,7 @@ The [pi coding agent](https://github.com/earendil-works/pi) on your phone, in th
   - the `pi-app` launcher, which prints a pairing QR;
   - browser pairing: the QR opens `/pair#t=<token>`, which trades the token for a sign-in cookie (90 days, revoked by rotating the token);
   - phone fixes on touch screens (`app/pi-app.css`): 44px touch targets, composer in thumb reach on an empty session, a shorter composer hint;
-  - two themes, Catppuccin Mocha (the default) and Lime, next to pi-web's own in Settings → Appearance.
+  - dark themes only: Dark, Catppuccin Mocha (default), Lime, Dusk, Ember, Slate, Zenburn, as one quiet list in Settings → Appearance (pi-web's light, high-contrast and Pine themes are removed).
 
 The earlier Android app (Svelte + Capacitor) is kept on the `archive/svelte` branch and tag `v0.6.1`.
 
