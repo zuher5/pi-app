@@ -39,6 +39,16 @@
   <div class="user">
     <button class="bubble body-l" onclick={() => onactions?.(shownText)} aria-haspopup="dialog">{#if planned}<span class="plan label-s">Plan</span>{/if}{shownText}</button>
   </div>
+{:else if message.role === "bashExecution"}
+  {@const m = message}
+  {@const name = m.excludeFromContext ? "shell (local)" : "shell"}
+  {@const out = (m.output || "") + (m.cancelled ? `\n${t("shell.cancelled")}` : m.exitCode ? `\nexit ${m.exitCode}` : "")}
+  <div class="bash">
+    <ToolCard initialOpen
+      call={{ type: "toolCall", toolCallId: `bash-${m.timestamp ?? ""}`, toolName: name, input: { command: m.command } }}
+      result={{ role: "toolResult", toolCallId: `bash-${m.timestamp ?? ""}`, toolName: name, content: out.trim() ? [{ type: "text", text: out.trim() }] : [], isError: !!m.cancelled || (m.exitCode ?? 0) !== 0, timestamp: m.timestamp ?? 0 }}
+    />
+  </div>
 {:else if message.role === "assistant"}
   <div class="assistant" class:streaming>
     {#each message.content as block, i (i)}

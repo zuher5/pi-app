@@ -22,7 +22,7 @@ const READS = /(^read$|^ls$|^grep$|^find$|read|list|get|search|fetch|view|glob)/
 export function isReadOnlyTool(name: string): boolean {
   return READS.test(name) && !WRITES.test(name);
 }
-export type Mode = "build" | "plan";
+export type Mode = "build" | "plan" | "shell";
 /** A session's first line for titles, without the Plan instruction. */
 export function cleanTitle(text: string | undefined): string {
   const raw = (text ?? "").startsWith(PLAN_PREFIX.trim()) ? (text ?? "").slice(PLAN_PREFIX.trim().length) : (text ?? "");
@@ -65,7 +65,9 @@ export class LiveSession {
   pendingUi = $state<Event[]>([]);
   loading = $state(false);
   /** Build or Plan, kept across sessions like a composer setting. */
-  mode = $state<Mode>((typeof localStorage !== "undefined" && localStorage.getItem("piapp.mode") === "plan") ? "plan" : "build");
+  mode = $state<Mode>(((m) => (m === "plan" || m === "shell" ? m : "build"))(typeof localStorage !== "undefined" ? localStorage.getItem("piapp.mode") : null));
+  /** A shell command the user ran directly (Shell mode), shown until its result lands in the transcript. */
+  pendingBash = $state<{ command: string } | null>(null);
   /** Model and thinking picked on the home screen, applied when its session starts. */
   pendingModel = $state<{ provider: string; modelId: string } | null>(null);
   pendingThinking = $state<string | null>(null);
@@ -147,12 +149,33 @@ export class LiveSession {
     if (this.pendingThinking) await this.setThinking(this.pendingThinking).catch(() => {});
     this.pendingModel = null;
     this.pendingThinking = null;
-    await this.send(text);
+    if (this.mode === "shell") await this.runBash(text);
+    else await this.send(text);
   }
 
   setMode(mode: Mode): void {
     this.mode = mode;
     localStorage.setItem("piapp.mode", mode);
+  }
+
+  /** Shell mode: run the command in the project directly, outside the agent; its output joins the transcript. */
+  async runBash(command: string): Promise<void> {
+    const cmd = command.trim();
+    if (!cmd || !this.id || this.pendingBash) return;
+    if (this.running) { this.notice = t("shell.busy"); return; }
+    this.notice = null;
+    this.pendingBash = { command: cmd };
+    try {
+      await api.command(this.id, { type: "bash", command: cmd });
+      await this.reload();
+    } catch (e) {
+      this.notice = e instanceof Error ? e.message : String(e);
+    } finally {
+      this.pendingBash = null;
+    }
+  }
+  async abortBash(): Promise<void> {
+    if (this.id) await api.command(this.id, { type: "abort_bash" }).catch(() => {});
   }
 
   /** Plan withdraws every tool that can change the project; Build gives them back. */
@@ -163,6 +186,7 @@ export class LiveSession {
     const tools = res?.data;
     if (!Array.isArray(tools)) return;
     const active = tools.filter((x) => x.active).map((x) => x.name);
+    if (this.mode === "shell") return;
     if (this.mode === "plan") {
       const writable = active.filter((n) => !isReadOnlyTool(n));
       if (!writable.length) return;

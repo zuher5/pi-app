@@ -20,3 +20,4 @@ export {
   mdiTestTube as iTest, mdiBookOpenVariant as iExplain, mdiTimerOutline as iTimer, mdiChartDonut as iUsage,
 } from "@mdi/js";
 export { mdiHammerWrench as iBuild, mdiKeyVariant as iKey, mdiServerNetwork as iServer, mdiPaletteOutline as iPalette, mdiTranslate as iLanguage, mdiLogin as iLogin, mdiDeleteOutline as iDelete, mdiOpenInNew as iOpen, mdiCloudSearchOutline as iDiscover, mdiStarOutline as iStar } from "@mdi/js";
+export { mdiConsoleLine as iShell } from "@mdi/js";

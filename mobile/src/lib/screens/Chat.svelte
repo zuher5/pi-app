@@ -14,9 +14,11 @@
   import ModelSheet from "../components/ModelSheet.svelte";
   import BranchSheet from "../components/BranchSheet.svelte";
   import MessageActions from "../components/MessageActions.svelte";
+  import Menu from "../components/Menu.svelte";
+  import ToolCard from "../components/ToolCard.svelte";
   import {
     iOffline, iClose, iModel, iBranch, iEdit, iMenu, iEditNew, iExpand, iFiles, iTerminal, iFolderPlus,
-    iExplore, iPlan, iBug, iReview, iTest, iExplain, iThinking, iPlus, iBuild,
+    iExplore, iPlan, iBug, iReview, iTest, iExplain, iThinking, iPlus, iBuild, iShell,
   } from "../icons";
   import { t, thinkLabel } from "../i18n.svelte";
   import { live, cleanTitle } from "../store/session.svelte";
@@ -36,12 +38,26 @@
   let recent = $state<string[]>([]);
   let customDir = $state("");
   let defaultModel = $state<{ provider: string; modelId: string } | null>(null);
+  let thinkingLevels = $state<Record<string, string[]>>({});
+  let dropdown = $state<null | { kind: "mode" | "reasoning"; anchor: HTMLElement }>(null);
   $effect(() => {
-    const dir = picked.cwd;
-    if (!live.id && dir) void api.models(dir).then((m) => (defaultModel = m.defaultModel)).catch(() => {});
+    const dir = live.info?.cwd ?? picked.cwd;
+    if (dir) void api.models(dir).then((m) => { defaultModel = m.defaultModel; thinkingLevels = m.thinkingLevels; }).catch(() => {});
   });
   const shownModel = $derived(live.id ? live.model : (live.pendingModel ?? defaultModel));
   const shownThinking = $derived(live.id ? live.thinkingLevel : (live.pendingThinking ?? "off"));
+  const levels = $derived(shownModel ? (thinkingLevels[`${shownModel.provider}:${shownModel.modelId}`] ?? ["off"]) : ["off"]);
+  const modes = $derived([
+    { id: "build" as const, label: t("mode.build"), sub: t("mode.buildSub"), icon: iBuild, color: "var(--ctp-green)" },
+    { id: "plan" as const, label: t("mode.plan"), sub: t("mode.planSub"), icon: iPlan, color: "var(--ctp-blue)" },
+    { id: "shell" as const, label: t("mode.shell"), sub: t("mode.shellSub"), icon: iShell, color: "var(--ctp-peach)" },
+  ]);
+  const modeIcon = $derived(live.mode === "plan" ? iPlan : live.mode === "shell" ? iShell : iBuild);
+  function pickLevel(lv: string) {
+    if (live.id) void live.setThinking(lv).catch((e) => toast(e instanceof Error ? e.message : String(e)));
+    else live.pendingThinking = lv;
+  }
+  const busy = $derived(live.running || !!live.pendingBash);
 
   $effect(() => {
     void api.sessions().then(({ sessions }) => {
@@ -118,7 +134,7 @@
 
   async function send(text: string) {
     nearBottom = true;
-    if (live.id) return live.send(text);
+    if (live.id) return live.mode === "shell" ? live.runBash(text) : live.send(text);
     if (!cwd) { sheet = "project"; draft = text; return; }
     starting = true;
     try {
@@ -210,6 +226,9 @@
         {:else if live.running}
           <div class="pending"><Rosette state="streaming" size={24} /></div>
         {/if}
+        {#if live.pendingBash}
+          <ToolCard call={{ type: "toolCall", toolCallId: "pending-bash", toolName: "shell", input: { command: live.pendingBash.command } }} run={{ state: "running", output: "" } as never} />
+        {/if}
         {#if live.retry}<p class="note body-m">{t("chat.retrying", { a: live.retry.attempt, m: live.retry.max })}</p>{/if}
       {/if}
     </div>
@@ -228,9 +247,10 @@
     </div>
   {/if}
 
-  <Composer bind:this={composer} bind:text={draft} running={live.running} disabled={(!!live.id && !live.connected) || starting}
-    placeholder={live.running ? t("chat.placeholderSteer") : t("chat.placeholderAsk")}
-    onsend={send} onstop={() => void live.stop()} onattach={cwd ? attach : undefined}>
+  <Composer bind:this={composer} bind:text={draft} running={busy} disabled={(!!live.id && !live.connected) || starting}
+    placeholder={live.mode === "shell" ? t("shell.placeholder") : live.running ? t("chat.placeholderSteer") : t("chat.placeholderAsk")}
+    shell={live.mode === "shell"}
+    onsend={send} onstop={() => void (live.pendingBash ? live.abortBash() : live.stop())} onattach={cwd && live.mode !== "shell" ? attach : undefined}>
     {#snippet above()}
       {#if hero}
         <button type="button" class="ctx label-l" onclick={() => (sheet = "project")}><span class="sw"></span>{project || t("new.pick")}<Icon path={iExpand} size={16} /></button>
@@ -240,22 +260,34 @@
       {/if}
     {/snippet}
     {#snippet left()}
-      <button type="button" class="chip mode label-l" class:plan={live.mode === "plan"} aria-pressed={live.mode === "plan"}
-        aria-label={t("mode.toggle", { mode: live.mode === "plan" ? t("mode.plan") : t("mode.build") })}
-        onclick={() => live.setMode(live.mode === "plan" ? "build" : "plan")}>
-        <Icon path={live.mode === "plan" ? iPlan : iBuild} size={16} />{live.mode === "plan" ? t("mode.plan") : t("mode.build")}
+      <button type="button" class="chip mode label-l" data-mode={live.mode} aria-haspopup="menu" aria-expanded={dropdown?.kind === "mode"}
+        aria-label={t("mode.label", { mode: t(`mode.${live.mode}`) })}
+        onclick={(e) => (dropdown = { kind: "mode", anchor: e.currentTarget })}>
+        <Icon path={modeIcon} size={16} />{t(`mode.${live.mode}`)}<span class="caret"><Icon path={iExpand} size={14} /></span>
       </button>
-      <button type="button" class="chip label-l" onclick={() => (sheet = "model")} aria-haspopup="dialog" disabled={!cwd}>
-        <Icon path={iModel} size={16} /><span class="mname">{shownModel?.modelId ?? t("model.title")}</span>
-      </button>
+      {#if live.mode !== "shell"}
+        <button type="button" class="chip label-l" onclick={() => (sheet = "model")} aria-haspopup="dialog" disabled={!cwd}>
+          <Icon path={iModel} size={16} /><span class="mname">{shownModel?.modelId ?? t("model.title")}</span>
+        </button>
+      {/if}
     {/snippet}
     {#snippet right()}
-      {#if shownThinking !== "off"}
-        <button type="button" class="chip think label-l" onclick={() => (sheet = "model")} aria-label={t("model.thinking")}><Icon path={iThinking} size={16} />{thinkLabel(shownThinking)}</button>
+      {#if live.mode !== "shell"}
+        <button type="button" class="chip think label-l" class:on={shownThinking !== "off"} aria-haspopup="menu" disabled={levels.length < 2 || live.running}
+          aria-label={levels.length < 2 ? t("reason.none") : t("model.thinking") + ": " + thinkLabel(shownThinking)}
+          onclick={(e) => (dropdown = { kind: "reasoning", anchor: e.currentTarget })}>
+          <Icon path={iThinking} size={16} /><span class="lv">{thinkLabel(levels.length < 2 ? "off" : shownThinking)}</span>
+        </button>
       {/if}
     {/snippet}
   </Composer>
 
+  {#if dropdown?.kind === "mode"}
+    <Menu anchor={dropdown.anchor} label={t("mode.title")} items={modes} value={live.mode} onpick={(m) => live.setMode(m)} onclose={() => (dropdown = null)} />
+  {:else if dropdown?.kind === "reasoning"}
+    <Menu anchor={dropdown.anchor} label={t("model.thinking")} value={shownThinking}
+      items={levels.map((lv) => ({ id: lv, label: thinkLabel(lv), sub: t(`reason.${lv}` as "reason.off") }))} onpick={pickLevel} onclose={() => (dropdown = null)} />
+  {/if}
   {#if sheet === "model"}<ModelSheet onclose={() => (sheet = null)} />{/if}
   {#if sheet === "branch"}<BranchSheet onclose={() => (sheet = null)} />{/if}
   {#if sheet === "context"}<ContextSheet onclose={() => (sheet = null)} />{/if}
@@ -342,9 +374,13 @@
   .chip :global(svg) { color: var(--md-on-surface-variant); flex: none; }
   .mname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
   .think { color: var(--md-on-surface-variant); padding: 0 8px; }
-  .mode { flex: none; color: var(--ctp-green); font-weight: 500; }
+  .mode { flex: none; color: var(--ctp-green); font-weight: 500; gap: 4px; }
   .mode :global(svg) { color: currentColor; }
-  .mode.plan { color: var(--ctp-blue); }
+  .mode[data-mode="plan"] { color: var(--ctp-blue); }
+  .mode[data-mode="shell"] { color: var(--ctp-peach); }
+  .caret { display: grid; opacity: 0.7; }
+  .think.on { color: var(--md-on-surface); }
+  .lv { white-space: nowrap; }
   .chip:disabled { opacity: 0.38; cursor: default; }
   .n { font-size: 0.6875rem; padding: 0 6px; border-radius: 8px; background: var(--md-primary); color: var(--md-on-primary); line-height: 16px; margin-left: 4px; }
 

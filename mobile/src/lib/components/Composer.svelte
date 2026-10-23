@@ -5,9 +5,11 @@
   import { iSend, iStop, iAttach } from "../icons";
   import { t } from "../i18n.svelte";
 
-  let { running, disabled = false, onsend, onstop, onattach, text = $bindable(""), above, left, right, placeholder }: {
+  let { running, disabled = false, onsend, onstop, onattach, text = $bindable(""), above, left, right, placeholder, shell = false }: {
     running: boolean; disabled?: boolean; onsend: (text: string) => void; onstop: () => void; onattach?: (files: File[]) => void;
     text?: string; above?: Snippet; left?: Snippet; right?: Snippet; placeholder?: string;
+    /** Shell mode: a command line, monospace, Enter runs it. */
+    shell?: boolean;
   } = $props();
   let el = $state<HTMLTextAreaElement>();
   let picker = $state<HTMLInputElement>();
@@ -37,11 +39,12 @@
 <form class="composer" onsubmit={(e) => { e.preventDefault(); submit(); }}>
   {#if above}<div class="above">{@render above()}</div>{/if}
   <div class="card">
+    {#if shell}<span class="prompt" aria-hidden="true">$</span>{/if}
     <textarea
-      bind:this={el} bind:value={text} rows="1" class="body-l"
+      bind:this={el} bind:value={text} rows="1" class="body-l" class:shell spellcheck={!shell}
       placeholder={placeholder ?? (running ? t("chat.placeholderSteer") : t("chat.placeholder"))}
-      enterkeyhint="send" autocapitalize="sentences"
-      onkeydown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); submit(); } }}
+      enterkeyhint="send" autocapitalize={shell ? "off" : "sentences"}
+      onkeydown={(e) => { if (e.key === "Enter" && (shell ? !e.shiftKey : e.ctrlKey || e.metaKey)) { e.preventDefault(); submit(); } }}
     ></textarea>
     <div class="row">
       {#if onattach}
@@ -57,7 +60,7 @@
       {#if running}
         <button type="button" class="tool stop" onclick={onstop} aria-label={t("chat.stop")}><Icon path={iStop} size={20} /></button>
       {/if}
-      <button class="send" disabled={!text.trim() || disabled} aria-label={running ? t("chat.steer") : t("chat.send")}>
+      <button class="send" disabled={!text.trim() || disabled || (shell && running)} aria-label={running ? t("chat.steer") : t("chat.send")}>
         <Icon path={iSend} size={20} />
       </button>
     </div>
@@ -77,6 +80,9 @@
     display: block; width: 100%; resize: none; border: 0; background: none; outline: none; color: var(--md-on-surface);
     padding: 12px 12px 6px; min-height: 48px; max-height: 200px; font-family: var(--font-sans);
   }
+  .card { position: relative; }
+  .prompt { position: absolute; left: 14px; top: 12px; font: 500 0.9375rem/1.5rem var(--font-mono); color: var(--ctp-peach); }
+  textarea.shell { font-family: var(--font-mono); font-size: 0.9375rem; padding-left: 30px; }
   textarea::placeholder { color: var(--md-on-surface-variant); opacity: 0.8; }
   .row { display: flex; align-items: center; gap: 2px; min-height: 44px; }
   .left { flex: 1; min-width: 0; display: flex; align-items: center; gap: 2px; overflow: hidden; }

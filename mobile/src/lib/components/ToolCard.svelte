@@ -1,13 +1,17 @@
 <script lang="ts">
+  import { untrack } from "svelte";
   import Icon from "./Icon.svelte";
   import Rosette from "./Rosette.svelte";
-  import { iExpand, iCheck, iError, iTool } from "../icons";
+  import { iExpand, iCheck, iError, iTool, iShell } from "../icons";
   import { t } from "../i18n.svelte";
   import type { ToolCallContent, ToolResultMessage } from "@pi/types";
   import type { ToolRun } from "../store/session.svelte";
 
-  let { call, result, run }: { call: ToolCallContent; result?: ToolResultMessage; run?: ToolRun } = $props();
-  let open = $state(false);
+  let { call, result, run, initialOpen = false }: { call: ToolCallContent; result?: ToolResultMessage; run?: ToolRun; initialOpen?: boolean } = $props();
+  let open = $state(untrack(() => initialOpen));
+  const isShell = $derived(/^(bash|shell|powershell)/.test(call.toolName));
+  // The summary already shows a lone command or path; repeat the arguments only when there are more.
+  const showArgs = $derived(Object.keys(call.input ?? {}).length > 1);
 
   const phase = $derived(result ? (result.isError ? "error" : "done") : run?.state ?? (call.rawInput !== undefined ? "running" : "done"));
   const summary = $derived.by(() => {
@@ -28,7 +32,7 @@
     <span class="ic">
       {#if phase === "running"}<Rosette state="streaming" size={18} />
       {:else if phase === "error"}<Icon path={iError} size={18} />
-      {:else}<Icon path={iTool} size={18} />{/if}
+      {:else}<Icon path={isShell ? iShell : iTool} size={18} />{/if}
     </span>
     <span class="name label-l">{call.toolName}</span>
     <code class="sum">{summary}</code>
@@ -38,7 +42,7 @@
   </button>
   {#if open}
     <div class="body">
-      {#if Object.keys(call.input ?? {}).length}
+      {#if showArgs}
         <pre class="args">{JSON.stringify(call.input, null, 2)}</pre>
       {/if}
       {#if output}<pre class="out">{output}</pre>{/if}
