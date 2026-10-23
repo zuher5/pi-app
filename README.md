@@ -14,7 +14,7 @@ The earlier Android app (Svelte + Capacitor) is kept on the `archive/svelte` bra
 
 Needs Node.js 22.19+ and git. One command, on PC or in Termux:
 
-    git clone <this repo> pi-app && cd pi-app
+    git clone https://github.com/zuher5/pi-app.git && cd pi-app
     ./pi-app                      # Windows: pi-app.cmd
 
 The first run installs dependencies and builds the server (a few minutes); later runs start in seconds and rebuild only after `git pull`. It prints a QR: scan it with the phone's camera and the link opens pi in the browser. Add it to the home screen from the browser menu for a full-screen app.
