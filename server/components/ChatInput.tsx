@@ -1,7 +1,6 @@
 "use client";
 
 import React, { memo, useRef, useState, useCallback, useEffect, useLayoutEffect, useImperativeHandle, forwardRef, KeyboardEvent } from "react";
-import { createPortal } from "react-dom";
 import type { BuiltinSlashCommandResult, CompactResultInfo, QueuedMessages, SlashCommandInfo } from "@/hooks/useAgentSession";
 import type { SkillsResponse } from "@/lib/api-types";
 import type { TextContent, UserMessage } from "@/lib/types";
@@ -687,20 +686,6 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
   const [toolDropdownOpen, setToolDropdownOpen] = useState(false);
   const [thinkingDropdownOpen, setThinkingDropdownOpen] = useState(false);
   const [controlsMenuOpen, setControlsMenuOpen] = useState(false);
-  const [controlsMenuTop, setControlsMenuTop] = useState<number | null>(null);
-
-  const updateControlsMenuTop = useCallback(() => {
-    if (controlsMenuRef.current) {
-      const rect = controlsMenuRef.current.getBoundingClientRect();
-      setControlsMenuTop(rect.top);
-    }
-  }, []);
-
-  useLayoutEffect(() => {
-    if (thinkingDropdownOpen || toolDropdownOpen) {
-      updateControlsMenuTop();
-    }
-  }, [thinkingDropdownOpen, toolDropdownOpen, updateControlsMenuTop]);
   const [attachedImages, setAttachedImages] = useState<AttachedImage[]>(() => (
     draftKey ? draftImagesToAttachedImages(getDraft(draftKey)?.images) : []
   ));
@@ -732,9 +717,7 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const toolDropdownRef = useRef<HTMLDivElement>(null);
-  const toolMenuRef = useRef<HTMLDivElement>(null);
   const thinkingDropdownRef = useRef<HTMLDivElement>(null);
-  const thinkingMenuRef = useRef<HTMLDivElement>(null);
   const controlsMenuRef = useRef<HTMLDivElement>(null);
   const historyMenuRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1705,30 +1688,16 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
   // Close dropdowns on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (
-        toolDropdownRef.current &&
-        !toolDropdownRef.current.contains(target) &&
-        !toolMenuRef.current?.contains(target)
-      ) {
+      if (toolDropdownRef.current && !toolDropdownRef.current.contains(e.target as Node)) {
         setToolDropdownOpen(false);
       }
-      if (
-        thinkingDropdownRef.current &&
-        !thinkingDropdownRef.current.contains(target) &&
-        !thinkingMenuRef.current?.contains(target)
-      ) {
+      if (thinkingDropdownRef.current && !thinkingDropdownRef.current.contains(e.target as Node)) {
         setThinkingDropdownOpen(false);
       }
-      if (
-        controlsMenuRef.current &&
-        !controlsMenuRef.current.contains(target) &&
-        !toolMenuRef.current?.contains(target) &&
-        !thinkingMenuRef.current?.contains(target)
-      ) {
+      if (controlsMenuRef.current && !controlsMenuRef.current.contains(e.target as Node)) {
         setControlsMenuOpen(false);
       }
-      if (historyMenuRef.current && !historyMenuRef.current.contains(target) && !textareaRef.current?.contains(target)) {
+      if (historyMenuRef.current && !historyMenuRef.current.contains(e.target as Node) && !textareaRef.current?.contains(e.target as Node)) {
         setHistoryMenuOpen(false);
       }
     };
@@ -2312,6 +2281,10 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
             className="chat-input-textarea"
             aria-label={compact ? t("chat.quoteQuestion") : undefined}
             value={value}
+            spellCheck={false}
+            autoCorrect="off"
+            autoComplete="off"
+            autoCapitalize="sentences"
             onChange={(e) => {
               valueRef.current = e.target.value;
               setValue(e.target.value);
@@ -2585,10 +2558,7 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
             {onThinkingLevelChange && (
               <div ref={thinkingDropdownRef} style={{ position: "relative" }}>
                 <button
-                  onClick={() => {
-                    updateControlsMenuTop();
-                    setThinkingDropdownOpen((v) => !v);
-                  }}
+                  onClick={() => setThinkingDropdownOpen((v) => !v)}
                   title={isStreaming
                     ? t("chat.currentReasoning", { level: thinkingDisplayLabel })
                     : t("chat.changeReasoning", { level: thinkingDisplayLabel })}
@@ -2622,99 +2592,68 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
                   </svg>
                   {(!isMobile || controlsMenuOpen) && <span style={{ whiteSpace: "nowrap" }}>{thinkingDisplayLabel}</span>}
                 </button>
-                {thinkingDropdownOpen && (() => {
-                  const node = (
-                    <div
-                      ref={thinkingMenuRef}
-                      style={{
-                        position: isMobile ? "fixed" : "absolute",
-                        ...(isMobile ? {
-                          left: 8,
-                          width: "calc(50vw - 10px)",
-                          maxWidth: "calc(50vw - 10px)",
-                          top: controlsMenuTop ? controlsMenuTop - 8 : undefined,
-                          bottom: controlsMenuTop ? undefined : "calc(env(safe-area-inset-bottom) + 54px)",
-                          transform: controlsMenuTop ? "translateY(-100%)" : undefined,
-                          maxHeight: controlsMenuTop ? Math.min(controlsMenuTop - 24, 340) : "min(48vh, 320px)",
-                          zIndex: 1000,
-                        } : {
-                          bottom: "calc(100% + 6px)",
-                          right: 0,
-                          minWidth: 180,
-                          zIndex: 100,
-                        }),
-                        background: "var(--bg)", border: "1px solid var(--border)",
-                        borderRadius: 8,
-                        boxShadow: "0 -4px 16px rgba(0,0,0,0.15)",
-                        overflow: "hidden",
-                        overflowY: "auto",
-                      }}
-                    >
-                      {THINKING_LEVELS.filter((lvl) => {
-                        if (!availableThinkingLevels) return true;
-                        if (lvl === "auto") return true;
-                        return availableThinkingLevels.includes(lvl);
-                      }).map((lvl) => {
-                        const isActive = lvl === "auto"
-                          ? isAutoThinkingSelection
-                          : !isAutoThinkingSelection && resolvedThinkingLevel === lvl;
-                        const desc = t(THINKING_LEVEL_DESC_KEYS[lvl]);
-                        const mappedVal = (lvl !== "auto" && thinkingLevelMap) ? thinkingLevelMap[lvl] : undefined;
-                        const displayLabel = (mappedVal != null && mappedVal !== lvl) ? mappedVal : lvl;
-                        const showOriginal = mappedVal != null && mappedVal !== lvl;
-                        return (
-                          <SelectorRow
-                            key={lvl}
-                            active={isActive}
-                            onSelect={() => {
-                              setThinkingDropdownOpen(false);
-                              if (lvl === "auto") {
-                                if (!isAutoThinkingSelection) onThinkingLevelChange("auto");
-                                return;
+                {thinkingDropdownOpen && (
+                  <div style={{
+                    position: "absolute", bottom: "calc(100% + 6px)",
+                    right: 0,
+                    zIndex: 100, background: "var(--bg)", border: "1px solid var(--border)",
+                    borderRadius: 8, boxShadow: "0 -4px 16px rgba(0,0,0,0.10)",
+                    overflow: "hidden", minWidth: 180,
+                    maxWidth: isMobile ? "calc(100vw - 24px)" : undefined,
+                  }}>
+                    {THINKING_LEVELS.filter((lvl) => {
+                      if (!availableThinkingLevels) return true;
+                      if (lvl === "auto") return true;
+                      return availableThinkingLevels.includes(lvl);
+                    }).map((lvl) => {
+                      const isActive = lvl === "auto"
+                        ? isAutoThinkingSelection
+                        : !isAutoThinkingSelection && resolvedThinkingLevel === lvl;
+                      const desc = t(THINKING_LEVEL_DESC_KEYS[lvl]);
+                      const mappedVal = (lvl !== "auto" && thinkingLevelMap) ? thinkingLevelMap[lvl] : undefined;
+                      const displayLabel = (mappedVal != null && mappedVal !== lvl) ? mappedVal : lvl;
+                      const showOriginal = mappedVal != null && mappedVal !== lvl;
+                      return (
+                        <SelectorRow
+                          key={lvl}
+                          active={isActive}
+                          onSelect={() => {
+                            setThinkingDropdownOpen(false);
+                            if (lvl === "auto") {
+                              if (!isAutoThinkingSelection) onThinkingLevelChange("auto");
+                              return;
+                            }
+                            if (!isActive || isAutoThinkingSelection) onThinkingLevelChange(lvl);
+                          }}
+                          gutter={Boolean(onSetDefaultThinkingLevel)}
+                          star={onSetDefaultThinkingLevel && lvl !== "auto"
+                            ? {
+                                isDefault: savedDefaultThinkingLevel === lvl,
+                                saveLabel: t("chat.saveDefaultThinking"),
+                                defaultLabel: t("chat.defaultThinking"),
+                                onSave: () => {
+                                  setThinkingDropdownOpen(false);
+                                  onSetDefaultThinkingLevel(lvl);
+                                },
                               }
-                              if (!isActive || isAutoThinkingSelection) onThinkingLevelChange(lvl);
-                            }}
-                            gutter={Boolean(onSetDefaultThinkingLevel)}
-                            star={onSetDefaultThinkingLevel && lvl !== "auto"
-                              ? {
-                                  isDefault: savedDefaultThinkingLevel === lvl,
-                                  saveLabel: t("chat.saveDefaultThinking"),
-                                  defaultLabel: t("chat.defaultThinking"),
-                                  onSave: () => {
-                                    setThinkingDropdownOpen(false);
-                                    onSetDefaultThinkingLevel(lvl);
-                                  },
-                                }
-                              : undefined}
-                          >
-                            <div style={{
-                              flex: 1, minWidth: 0, display: "flex", flexDirection: isMobile ? "column" : "row",
-                              alignItems: isMobile ? "flex-start" : "center", gap: isMobile ? 2 : 0,
-                            }}>
-                              <span style={{ flex: isMobile ? undefined : 1, fontWeight: isMobile ? 600 : undefined }}>
-                                {displayLabel}
-                                {showOriginal && <span style={{ fontSize: 10, color: "var(--text-dim)", fontFamily: "var(--font-mono)", marginLeft: 5 }}>({lvl})</span>}
-                              </span>
-                              <span style={{ fontSize: 10, color: "var(--text-dim)", marginLeft: isMobile ? 0 : 8, overflowWrap: "anywhere", lineHeight: 1.25 }}>{desc}</span>
-                            </div>
-                          </SelectorRow>
-                        );
-                      })}
-                    </div>
-                  );
-                  return isMobile && typeof document !== "undefined" ? createPortal(node, document.body) : node;
-                })()}
+                            : undefined}
+                        >
+                          <span style={{ flex: 1 }}>
+                            {displayLabel}
+                            {showOriginal && <span style={{ fontSize: 10, color: "var(--text-dim)", fontFamily: "var(--font-mono)", marginLeft: 5 }}>({lvl})</span>}
+                          </span>
+                          <span style={{ fontSize: 11, color: "var(--text-dim)", marginLeft: 8 }}>{desc}</span>
+                        </SelectorRow>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
             {!isStreaming && onToolPresetChange && (
               <div ref={toolDropdownRef} style={{ position: "relative" }}>
                 <button
-                  onClick={(e) => {
-                    if (!isStreaming && !isStrayClick(e)) {
-                      updateControlsMenuTop();
-                      setToolDropdownOpen((v) => !v);
-                    }
-                  }}
+                  onClick={(e) => { if (!isStreaming && !isStrayClick(e)) setToolDropdownOpen((v) => !v); }}
                   disabled={isStreaming}
                   title={t("chat.changeToolPreset") + `: ${toolPresetLabel}`}
                   aria-label={t("chat.changeToolPreset")}
@@ -2747,75 +2686,52 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
                   </svg>
                   {(!isMobile || controlsMenuOpen) && <span style={{ whiteSpace: "nowrap" }}>{toolPresetLabel}</span>}
                 </button>
-                {toolDropdownOpen && (() => {
-                  const node = (
-                    <div
-                      ref={toolMenuRef}
-                      style={{
-                        position: isMobile ? "fixed" : "absolute",
-                        ...(isMobile ? {
-                          right: 8,
-                          left: "auto",
-                          width: "calc(50vw - 10px)",
-                          maxWidth: "calc(50vw - 10px)",
-                          top: controlsMenuTop ? controlsMenuTop - 8 : undefined,
-                          bottom: controlsMenuTop ? undefined : "calc(env(safe-area-inset-bottom) + 54px)",
-                          transform: controlsMenuTop ? "translateY(-100%)" : undefined,
-                          maxHeight: controlsMenuTop ? Math.min(controlsMenuTop - 24, 340) : "min(48vh, 320px)",
-                          zIndex: 1000,
-                        } : {
-                          bottom: "calc(100% + 6px)",
-                          right: 0,
-                          minWidth: 160,
-                          zIndex: 100,
-                        }),
-                        background: "var(--bg)", border: "1px solid var(--border)",
-                        borderRadius: 8,
-                        boxShadow: "0 -4px 16px rgba(0,0,0,0.15)",
-                        overflow: "hidden",
-                        overflowY: "auto",
-                      }}
-                    >
-                      {TOOL_PRESETS.map((lvl) => {
-                        const preset = TOOL_PRESET_MAP[lvl];
-                        const isActive = (toolPreset ?? "configured") === preset;
-                        let desc: string;
-                        if (lvl === "configured") desc = t("chat.configuredTools");
-                        else if (lvl === "chat-only") desc = t("chat.chatOnly");
-                        else if (lvl === "read-only") desc = t("chat.readOnlyTools", { count: 4 });
-                        else if (lvl === "default") desc = t("chat.builtInTools", { count: 4 });
-                        else desc = t("chat.allBuiltInTools");
-                        return (
-                          <button
-                            key={lvl}
-                            onClick={() => { setToolDropdownOpen(false); if (!isActive) onToolPresetChange(preset); }}
-                            style={{
-                              display: "flex", alignItems: isMobile ? "flex-start" : "center", gap: 8,
-                              width: "100%", padding: isMobile ? "6px 8px" : "7px 12px",
-                              background: isActive ? "var(--bg-selected)" : "none",
-                              border: "none",
-                              color: isActive ? "var(--text)" : "var(--text-muted)",
-                              cursor: "pointer", fontSize: 12, textAlign: "left",
-                              fontWeight: isActive ? 600 : 400,
-                              whiteSpace: isMobile ? "normal" : "nowrap",
-                            }}
-                            onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = "var(--bg-hover)"; }}
-                            onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = "none"; }}
-                          >
-                            {isActive
-                              ? <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: isMobile ? 3 : 0 }}><polyline points="1.5 5 4 7.5 8.5 2.5" /></svg>
-                              : <span style={{ width: 10, flexShrink: 0 }} />}
-                            <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "flex-start" : "center", gap: isMobile ? 2 : 0 }}>
-                              <span style={{ flex: isMobile ? undefined : 1, fontWeight: isMobile ? 600 : undefined }}>{lvl}</span>
-                              <span style={{ fontSize: 10, color: "var(--text-dim)", marginLeft: isMobile ? 0 : 8, overflowWrap: "anywhere", lineHeight: 1.25 }}>{desc}</span>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  );
-                  return isMobile && typeof document !== "undefined" ? createPortal(node, document.body) : node;
-                })()}
+                {toolDropdownOpen && (
+                  <div style={{
+                    position: "absolute",
+                    bottom: "calc(100% + 6px)",
+                    right: 0,
+                    zIndex: 100, background: "var(--bg)", border: "1px solid var(--border)",
+                    borderRadius: 8, boxShadow: "0 -4px 16px rgba(0,0,0,0.10)",
+                    overflow: "hidden", minWidth: 160,
+                    maxWidth: isMobile ? "calc(100vw - 24px)" : undefined,
+                  }}>
+                    {TOOL_PRESETS.map((lvl) => {
+                      const preset = TOOL_PRESET_MAP[lvl];
+                      const isActive = (toolPreset ?? "configured") === preset;
+                      let desc: string;
+                      if (lvl === "configured") desc = t("chat.configuredTools");
+                      else if (lvl === "chat-only") desc = t("chat.chatOnly");
+                      else if (lvl === "read-only") desc = t("chat.readOnlyTools", { count: 4 });
+                      else if (lvl === "default") desc = t("chat.builtInTools", { count: 4 });
+                      else desc = t("chat.allBuiltInTools");
+                      return (
+                        <button
+                          key={lvl}
+                          onClick={() => { setToolDropdownOpen(false); if (!isActive) onToolPresetChange(preset); }}
+                          style={{
+                            display: "flex", alignItems: "center", gap: 8,
+                            width: "100%", padding: "7px 12px",
+                            background: isActive ? "var(--bg-selected)" : "none",
+                            border: "none",
+                            color: isActive ? "var(--text)" : "var(--text-muted)",
+                            cursor: "pointer", fontSize: 12, textAlign: "left",
+                            fontWeight: isActive ? 600 : 400,
+                            whiteSpace: "nowrap",
+                          }}
+                          onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = "var(--bg-hover)"; }}
+                          onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = "none"; }}
+                        >
+                          {isActive
+                            ? <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><polyline points="1.5 5 4 7.5 8.5 2.5" /></svg>
+                            : <span style={{ width: 10, flexShrink: 0 }} />}
+                          <span style={{ flex: 1 }}>{lvl}</span>
+                          <span style={{ fontSize: 11, color: "var(--text-dim)", marginLeft: 8 }}>{desc}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
