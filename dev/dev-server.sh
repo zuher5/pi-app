@@ -17,4 +17,4 @@ cat > "$PI_CODING_AGENT_DIR/settings.json" <<JSON
 JSON
 node "$HERE/mock-llm.mjs" &
 cd "$HERE/../server"
-PI_APP_ALLOWED_ORIGINS="${PI_APP_ALLOWED_ORIGINS:-http://127.0.0.1:4173,http://localhost:5173}" PI_APP_TOKEN="${PI_APP_TOKEN:-dev-token-change-me-0123456789}" PI_WEB_DEFAULT_CWD="$DEMO" exec npx next dev -H 0.0.0.0 -p 30141
+PI_APP_TOKEN="${PI_APP_TOKEN:-dev-token-change-me-0123456789}" PI_APP_REQUIRE_TOKEN="${PI_APP_REQUIRE_TOKEN:-1}" PI_WEB_DEFAULT_CWD="$DEMO" exec npx next dev -H 0.0.0.0 -p 30141

@@ -1,5 +1,5 @@
 // Settings shows these as swatches: System, the light row, the dark row, then a row of three:
-// the high-contrast pair and Zenburn.
+// the high-contrast pair and Zenburn, then Pi-App's pair: Catppuccin Mocha and Lime.
 // The rows line up by hue: each light theme sits above its dark counterpart; Rose and Slate have none.
 export const THEME_OPTIONS = [
   { id: "auto", label: "settings.themeSystem", scheme: null },
@@ -16,6 +16,8 @@ export const THEME_OPTIONS = [
   { id: "contrast-light", label: "settings.themeContrastLight", scheme: "light" },
   { id: "contrast-dark", label: "settings.themeContrastDark", scheme: "dark" },
   { id: "zenburn", label: "settings.themeZenburn", scheme: "dark" },
+  { id: "mocha", label: "settings.themeMocha", scheme: "dark" },
+  { id: "lime", label: "settings.themeLime", scheme: "dark" },
 ] as const;
 
 export type ThemePreference = (typeof THEME_OPTIONS)[number]["id"];
@@ -23,6 +25,9 @@ export type ResolvedTheme = Exclude<ThemePreference, "auto">;
 
 export const LIGHT_THEMES: readonly ResolvedTheme[] = THEME_OPTIONS.flatMap((option) => (option.scheme === "light" ? [option.id] : []));
 export const DARK_THEMES: readonly ResolvedTheme[] = THEME_OPTIONS.flatMap((option) => (option.scheme === "dark" ? [option.id] : []));
+
+/** Pi-App: a browser with no saved choice opens in Catppuccin Mocha. */
+export const DEFAULT_THEME_PREFERENCE: ThemePreference = "mocha";
 
 export function isThemePreference(value: unknown): value is ThemePreference {
   return THEME_OPTIONS.some((option) => option.id === value);
@@ -33,4 +38,4 @@ export function isDarkTheme(theme: ResolvedTheme): boolean {
 }
 
 // Apply the saved palette before first paint, including when storage is blocked.
-export const THEME_INIT_SCRIPT = `(function(){var t="auto";try{var s=localStorage.getItem("pi-theme");if(${JSON.stringify(THEME_OPTIONS.map((option) => option.id))}.includes(s))t=s}catch(e){}if(t==="auto")t=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";var r=document.documentElement;r.dataset.theme=t;r.classList.toggle("dark",${JSON.stringify(DARK_THEMES)}.includes(t))})();`;
+export const THEME_INIT_SCRIPT = `(function(){var t=${JSON.stringify(DEFAULT_THEME_PREFERENCE)};try{var s=localStorage.getItem("pi-theme");if(${JSON.stringify(THEME_OPTIONS.map((option) => option.id))}.includes(s))t=s}catch(e){}if(t==="auto")t=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";var r=document.documentElement;r.dataset.theme=t;r.classList.toggle("dark",${JSON.stringify(DARK_THEMES)}.includes(t))})();`;

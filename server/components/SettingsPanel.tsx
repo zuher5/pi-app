@@ -222,6 +222,7 @@ function GeneralSettings({ sessionId, onSessionReloaded, quoteSelectionEnabled, 
                 className="settings-theme-option"
                 data-system={option.id === "auto" || undefined}
                 data-wide={option.id === "contrast-light" || option.id === "contrast-dark" || option.id === "zenburn" || undefined}
+                data-half={option.id === "mocha" || option.id === "lime" || undefined}
               >
                 <input
                   type="radio"

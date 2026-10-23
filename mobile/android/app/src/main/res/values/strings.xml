@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">Pi-App</string>
-    <string name="title_activity_main">Pi-App</string>
-    <string name="package_name">dev.piapp.app</string>
-    <string name="custom_url_scheme">dev.piapp.app</string>
-</resources>

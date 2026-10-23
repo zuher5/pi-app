@@ -1,4 +1,4 @@
-import { createHash, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { isIP } from "node:net";
 
 function normalizeHostname(value: string): string {
@@ -255,4 +255,41 @@ export function corsHeaders(origin: string): Record<string, string> {
     "Access-Control-Max-Age": "600",
     Vary: "Origin",
   };
+}
+
+/*
+ * Browser pairing: the QR opens `<server>/pair#t=<token>` in the phone's browser.
+ * That page trades the token for this cookie, so the browser uses pi-web's own
+ * UI without a password. The cookie is signed with the token: rotating the token
+ * (`pi-app token --rotate`) signs every paired browser out.
+ */
+export const PI_APP_SESSION_COOKIE = "pi_app_session";
+export const PI_APP_SESSION_MAX_AGE = 60 * 60 * 24 * 90;
+
+function appSessionSignature(payload: string, token: string): string {
+  return createHmac("sha256", token).update(`pi-app-session:${payload}`, "utf8").digest("hex");
+}
+
+export function isValidAppTokenValue(supplied: unknown, expected = getAppToken()): boolean {
+  if (!expected || typeof supplied !== "string" || !supplied) return false;
+  return timingSafeEqual(hash(supplied), hash(expected));
+}
+
+export function createAppSessionToken(
+  token = getAppToken(),
+  now = Date.now(),
+  nonce = randomBytes(16).toString("hex"),
+): string | null {
+  if (!token) return null;
+  const payload = `v1.${Math.floor(now / 1000) + PI_APP_SESSION_MAX_AGE}.${nonce}`;
+  return `${payload}.${appSessionSignature(payload, token)}`;
+}
+
+export function isValidAppSessionToken(value: string | undefined, token = getAppToken(), now = Date.now()): boolean {
+  if (!value || !token) return false;
+  const match = /^(v1\.(\d+)\.[a-f0-9]{32})\.([a-f0-9]{64})$/.exec(value);
+  if (!match) return false;
+  const expiresAt = Number(match[2]);
+  if (!Number.isSafeInteger(expiresAt) || expiresAt <= Math.floor(now / 1000)) return false;
+  return timingSafeEqual(hash(match[3]), hash(appSessionSignature(match[1], token)));
 }

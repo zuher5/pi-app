@@ -14,7 +14,7 @@ import {
   isWebPasswordEnabled,
   PI_WEB_SESSION_COOKIE,
 } from "@/lib/web-auth";
-import { corsHeaders, isAppOrigin, isValidAppToken } from "@/lib/pi-app-auth";
+import { corsHeaders, isAppOrigin, isValidAppSessionToken, isValidAppToken, PI_APP_SESSION_COOKIE } from "@/lib/pi-app-auth";
 
 function tooManyAttempts(retryAfterMs: number): NextResponse {
   return new NextResponse("Too many failed attempts", {
@@ -61,12 +61,21 @@ export function proxy(request: NextRequest) {
     return NextResponse.json({ error: "Untrusted API request" }, { status: 403 });
   }
 
+  // Pi-App: a browser paired by QR carries the app-session cookie: it is signed in.
+  if (isValidAppSessionToken(request.cookies.get(PI_APP_SESSION_COOKIE)?.value)) {
+    return request.nextUrl.pathname === "/login"
+      ? NextResponse.redirect(new URL("/", request.url))
+      : NextResponse.next();
+  }
+  // The pairing exchange itself (rate-limited in its route).
+  if (request.nextUrl.pathname === "/api/pi-app/session") return NextResponse.next();
+
   const password = process.env.PI_WEB_PASSWORD;
   // Pi-App on a LAN address with no web password: only token holders get in.
   if (process.env.PI_APP_REQUIRE_TOKEN === "1" && !isWebPasswordEnabled(password)) {
     return isApiRequest
       ? NextResponse.json({ error: "Pairing token required" }, { status: 401, headers: { "Cache-Control": "no-store" } })
-      : new NextResponse("Pi-App server. Pair from the Android app, or set PI_WEB_PASSWORD to use the web UI.", { status: 401 });
+      : new NextResponse("Pi-App: scan the QR code that `pi-app` printed with your phone's camera (or run `pi-app pair` to show it again).", { status: 401, headers: { "Content-Type": "text/plain; charset=utf-8" } });
   }
   if (!isWebPasswordEnabled(password)) {
     if (request.nextUrl.pathname === "/login") {

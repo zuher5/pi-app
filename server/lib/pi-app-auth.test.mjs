@@ -31,3 +31,17 @@ test("short tokens disable app auth", async () => {
   const { getAppToken } = await import("./request-security.ts");
   assert.equal(getAppToken("short"), null);
 });
+
+test("browser pairing: the token buys a signed session cookie that rotation revokes", async () => {
+  process.env.PI_APP_TOKEN = TOKEN;
+  const { createAppSessionToken, isValidAppSessionToken, isValidAppTokenValue } = await import("./request-security.ts");
+  assert.equal(isValidAppTokenValue(TOKEN), true);
+  assert.equal(isValidAppTokenValue("nope"), false);
+  assert.equal(isValidAppTokenValue(undefined), false);
+  const cookie = createAppSessionToken();
+  assert.equal(isValidAppSessionToken(cookie), true);
+  assert.equal(isValidAppSessionToken(cookie.replace(/.$/, (c) => (c === "0" ? "1" : "0"))), false);
+  assert.equal(isValidAppSessionToken(cookie, "another-token-0123456789-abcdefgh"), false);
+  assert.equal(isValidAppSessionToken(createAppSessionToken(TOKEN, 0)), false); // expired
+  assert.equal(isValidAppSessionToken(undefined), false);
+});

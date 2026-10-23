@@ -2307,7 +2307,7 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
               isStreaming && (onSteer || onFollowUp)
                 ? t("chat.steerPlaceholder")
                 : isStreaming ? t("chat.agentPlaceholder")
-                : t("chat.messagePlaceholder")
+                : isMobile ? t("chat.messagePlaceholderShort") : t("chat.messagePlaceholder")
             }
             rows={1}
             style={{
@@ -2381,6 +2381,7 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
             </div>
           ) : (
             <button
+              className="pa-send"
               onClick={handleSend}
               disabled={!value.trim() && !attachedImages.length}
               title={t("chat.send")}

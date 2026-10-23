@@ -1,0 +1,64 @@
+/*
+ * Pi-App: phone fixes on top of pi-web's own UI (Impeccable + anti-slop mobile
+ * layout). Kept in this one file, plus a few class hooks in the components, so
+ * upstream pi-web merges stay simple. Only touch screens change; desktop with
+ * a mouse renders exactly as upstream.
+ */
+
+@media (pointer: coarse) {
+  /* Touch targets: 44px hit area. Icons and type keep their size. */
+  .pa-topbar {
+    height: calc(44px + env(safe-area-inset-top)) !important;
+  }
+  .pa-topbar button {
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+  .pa-sidebar-footer button {
+    height: 44px !important;
+  }
+  .sidebar-header {
+    height: 44px !important;
+  }
+  /* The wider search key still leaves room for the "New" label. */
+  .sidebar-tab {
+    padding-inline: 8px !important;
+  }
+  .sidebar-tab,
+  .sidebar-new-button,
+  .sidebar-search-toggle {
+    min-height: 44px !important;
+  }
+  .sidebar-new-button,
+  .sidebar-search-toggle {
+    min-width: 44px !important;
+  }
+  .session-tree-action,
+  .session-tree-group-action {
+    width: 44px !important;
+    height: 44px !important;
+  }
+  .chat-input-controls {
+    gap: 4px !important;
+  }
+  .chat-input-controls button {
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+  .project-picker-button {
+    min-height: 44px !important;
+  }
+  .pa-send {
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 12px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Empty new session: the composer sits at the bottom, in thumb reach, with
+     the brand and project row just above it, as in a running session. */
+  .pa-empty-tail {
+    display: none;
+  }
+}

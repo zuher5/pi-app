@@ -2,8 +2,8 @@
 "use strict";
 
 /*
- * pi-app: the Pi-App bridge server. It is pi-web's server, started with a
- * pairing token so the Android app can connect, and a QR code to pair with.
+ * pi-app: pi-web's server, started with a pairing token and a QR code. Scanning
+ * the QR with a phone opens pi-web in the phone's browser, already signed in.
  *
  *   pi-app                 PC mode: listen on the LAN (0.0.0.0), print QR
  *   pi-app --local         Termux / same device: listen on 127.0.0.1 only
@@ -64,7 +64,7 @@ function isTermux() {
   return Boolean(process.env.TERMUX_VERSION) || (process.env.PREFIX ?? "").includes("com.termux");
 }
 
-/** Addresses a phone can reach: LAN and Tailscale (100.64/10) IPv4s. */
+/** Addresses a phone can reach: LAN first (works with no extra app), then Tailscale (100.64/10). */
 function reachableAddresses() {
   const out = [];
   for (const list of Object.values(os.networkInterfaces())) {
@@ -73,7 +73,7 @@ function reachableAddresses() {
     }
   }
   const tailscale = (ip) => ip.startsWith("100.") && Number(ip.split(".")[1]) >= 64 && Number(ip.split(".")[1]) < 128;
-  return out.sort((a, b) => Number(tailscale(b)) - Number(tailscale(a)));
+  return out.sort((a, b) => Number(tailscale(a)) - Number(tailscale(b)));
 }
 
 function pairingUrls(hostname, port) {
@@ -84,28 +84,29 @@ function pairingUrls(hostname, port) {
   return [`http://${hostname}:${port}`];
 }
 
-function pairingLink(urls, token) {
-  const params = new URLSearchParams();
-  for (const url of urls) params.append("u", url);
-  params.set("t", token);
-  params.set("n", os.hostname());
-  return `piapp://pair?${params.toString()}`;
+/** The QR opens this in the phone's browser; the token rides in the fragment, never in a request URL. */
+function pairingLink(url, token) {
+  return `${url}/pair#t=${encodeURIComponent(token)}`;
 }
 
 function printPairing(urls, token) {
-  const link = pairingLink(urls, token);
   const out = process.stdout;
-  out.write("\n  Pi-App pairing — scan with the app (Pair → Scan QR)\n\n");
+  if (!urls.length) {
+    out.write("\n  Pi-App: no network address found. Connect to Wi-Fi or Tailscale, then run `pi-app pair`.\n\n");
+    return;
+  }
+  const link = pairingLink(urls[0], token);
+  out.write("\n  Pi-App — scan with your phone's camera to open pi in the browser\n\n");
   try {
     const qrcode = require("qrcode-terminal");
     qrcode.generate(link, { small: true }, (qr) => out.write(`${qr.replace(/^/gm, "  ")}\n`));
   } catch {
     out.write("  (install qrcode-terminal to show a QR code)\n");
   }
-  out.write("\n  Or enter manually:\n");
-  for (const url of urls) out.write(`    Server  ${url}\n`);
-  out.write(`    Token   ${token}\n\n`);
-  out.write("  Keep the token private: it grants full control of pi on this machine.\n\n");
+  out.write("\n  Or open on the phone:\n");
+  for (const url of urls) out.write(`    ${pairingLink(url, token)}\n`);
+  if (urls.length > 1) out.write("  (the QR uses the first address; `pi-app pair --url <address>` shows a QR for another)\n");
+  out.write("\n  Keep this link private: it grants full control of pi on this machine.\n\n");
 }
 
 function takeFlag(args, ...names) {
@@ -143,7 +144,9 @@ function main() {
   const token = loadToken();
 
   if (first === "pair") {
-    printPairing(pairingUrls(hostname, port), token);
+    const chosen = optionValue(args, "--url", "-u", "");
+    const urls = pairingUrls(hostname, port);
+    printPairing(chosen ? [chosen.replace(/\/+$/, "")] : urls, token);
     return;
   }
 

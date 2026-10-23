@@ -1,5 +1,7 @@
 # Product
 
+> **Superseded 2026-10-23.** Pi-App is now pi-web's own UI in the phone browser (QR pairing, small touch fixes, Catppuccin Mocha + Lime themes). See README. This document describes the archived Android app (branch `archive/svelte`).
+
 <!-- impeccable:product-schema 1 -->
 
 ## Platform
