@@ -230,12 +230,9 @@ function GeneralSettings({ sessionId, onSessionReloaded, quoteSelectionEnabled, 
                   onChange={() => setThemePreference(option.id)}
                   className="sr-only"
                 />
-                {/* A data-theme span paints with that theme's own variables. System is a switch, not a
-                    palette: a neutral tile with a light and a dark chip beside its name. */}
+                {/* A data-theme span paints with that theme's own variables. System is a neutral tile with its name. */}
                 {option.id === "auto" ? (
                   <span className="settings-theme-swatch settings-theme-system" aria-hidden="true">
-                    <span data-theme="light" className="settings-theme-chip" />
-                    <span data-theme="dark" className="settings-theme-chip" />
                     <span className="settings-theme-system-name">{t(option.label)}</span>
                   </span>
                 ) : (

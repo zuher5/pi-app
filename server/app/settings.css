@@ -1659,18 +1659,10 @@
 }
 
 .settings-theme-system {
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
   background: var(--bg-panel);
-}
-
-.settings-theme-chip {
-  width: 12px;
-  height: 12px;
-  border: 1px solid var(--border);
-  border-radius: 3px;
-  background: var(--bg);
 }
 
 .settings-theme-system-name {
@@ -1680,18 +1672,18 @@
   white-space: nowrap;
 }
 
-/* Plain, quiet selection: clean neutral border without colored accent ring */
+/* Plain, quiet selection: soft faded border for a gentle, aesthetic feel */
 .settings-theme-option:not(:has(input:checked)):hover .settings-theme-swatch {
-  border-color: var(--text-muted);
+  border-color: color-mix(in srgb, var(--text) 35%, var(--border));
 }
 
 .settings-theme-option:has(input:checked) .settings-theme-swatch {
-  border-color: var(--text);
-  box-shadow: 0 0 0 1px var(--text);
+  border-color: color-mix(in srgb, var(--text) 50%, var(--border));
+  box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--text) 25%, transparent);
 }
 
 .settings-theme-option:has(input:focus-visible) .settings-theme-swatch {
-  outline: 2px dashed var(--text);
+  outline: 2px dashed color-mix(in srgb, var(--text) 50%, transparent);
   outline-offset: 3px;
 }
 
