@@ -2284,7 +2284,9 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
             spellCheck={false}
             autoCorrect="off"
             autoComplete="off"
-            autoCapitalize="sentences"
+            autoCapitalize="off"
+            data-gramm="false"
+            data-enable-grammarly="false"
             onChange={(e) => {
               valueRef.current = e.target.value;
               setValue(e.target.value);
@@ -2556,9 +2558,12 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
               } : null),
             }}>
             {onThinkingLevelChange && (
-              <div ref={thinkingDropdownRef} style={{ position: "relative" }}>
+              <div ref={thinkingDropdownRef} style={{ position: isMobile ? "static" : "relative" }}>
                 <button
-                  onClick={() => setThinkingDropdownOpen((v) => !v)}
+                  onClick={() => {
+                    if (isMobile) setToolDropdownOpen(false);
+                    setThinkingDropdownOpen((v) => !v);
+                  }}
                   title={isStreaming
                     ? t("chat.currentReasoning", { level: thinkingDisplayLabel })
                     : t("chat.changeReasoning", { level: thinkingDisplayLabel })}
@@ -2595,11 +2600,12 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
                 {thinkingDropdownOpen && (
                   <div style={{
                     position: "absolute", bottom: "calc(100% + 6px)",
-                    right: 0,
+                    left: isMobile ? 0 : undefined,
+                    right: isMobile ? undefined : 0,
                     zIndex: 100, background: "var(--bg)", border: "1px solid var(--border)",
                     borderRadius: 8, boxShadow: "0 -4px 16px rgba(0,0,0,0.10)",
                     overflow: "hidden", minWidth: 180,
-                    maxWidth: isMobile ? "calc(100vw - 24px)" : undefined,
+                    maxWidth: isMobile ? "calc(100vw - 32px)" : undefined,
                   }}>
                     {THINKING_LEVELS.filter((lvl) => {
                       if (!availableThinkingLevels) return true;
@@ -2651,9 +2657,14 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
               </div>
             )}
             {!isStreaming && onToolPresetChange && (
-              <div ref={toolDropdownRef} style={{ position: "relative" }}>
+              <div ref={toolDropdownRef} style={{ position: isMobile ? "static" : "relative" }}>
                 <button
-                  onClick={(e) => { if (!isStreaming && !isStrayClick(e)) setToolDropdownOpen((v) => !v); }}
+                  onClick={(e) => {
+                    if (!isStreaming && !isStrayClick(e)) {
+                      if (isMobile) setThinkingDropdownOpen(false);
+                      setToolDropdownOpen((v) => !v);
+                    }
+                  }}
                   disabled={isStreaming}
                   title={t("chat.changeToolPreset") + `: ${toolPresetLabel}`}
                   aria-label={t("chat.changeToolPreset")}
@@ -2694,7 +2705,7 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
                     zIndex: 100, background: "var(--bg)", border: "1px solid var(--border)",
                     borderRadius: 8, boxShadow: "0 -4px 16px rgba(0,0,0,0.10)",
                     overflow: "hidden", minWidth: 160,
-                    maxWidth: isMobile ? "calc(100vw - 24px)" : undefined,
+                    maxWidth: isMobile ? "calc(100vw - 32px)" : undefined,
                   }}>
                     {TOOL_PRESETS.map((lvl) => {
                       const preset = TOOL_PRESET_MAP[lvl];
