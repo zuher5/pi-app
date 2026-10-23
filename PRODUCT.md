@@ -15,7 +15,8 @@ Pi-App puts the `pi` coding agent on a phone, in the phone's own browser, withou
 Not a re-skin. Pi-App is pi-web plus two things: a one-command launcher that works the same on Linux, macOS, Termux and Windows, and QR pairing that links a phone to the running server.
 
 ## Capabilities and Constraints
-- Upstream UI/UX and theme set, unmodified: System (follows the OS), light, dark, high-contrast and Zenburn palettes, the same Settings panels, components and CSS.
+- Themes: 4 clean, proportional tiles in a 2x2 grid (System, Light, Catppuccin Mocha [default], Lime) with plain, neutral borders and no loud colored accents.
+- Mobile composer: More controls dropdown ("configured" tool presets, reasoning levels) elevated and bounded within the mobile browser screen.
 - Pairing: the QR opens `/pair#t=<token>`; the token is traded for a 90-day sign-in cookie, revoked by rotating the token. Off loopback every request needs it (or `PI_WEB_PASSWORD`).
 - Launcher: `pi-app` installs dependencies and builds only when the code changed, then starts the server and prints the QR; `pi-app pair` reprints it; `pi-app token --rotate` signs paired browsers out.
 - Plain HTTP on LAN; Tailscale recommended outside home. Termux listens on loopback only.

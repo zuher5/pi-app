@@ -2591,10 +2591,11 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
                 {thinkingDropdownOpen && (
                   <div style={{
                     position: "absolute", bottom: "calc(100% + 6px)",
-                    ...(isMobile ? { left: 0 } : { right: 0 }),
+                    right: 0,
                     zIndex: 100, background: "var(--bg)", border: "1px solid var(--border)",
                     borderRadius: 8, boxShadow: "0 -4px 16px rgba(0,0,0,0.10)",
                     overflow: "hidden", minWidth: 180,
+                    maxWidth: isMobile ? "min(280px, calc(100vw - 24px))" : undefined,
                   }}>
                     {THINKING_LEVELS.filter((lvl) => {
                       if (!availableThinkingLevels) return true;
@@ -2685,11 +2686,11 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
                   <div style={{
                     position: "absolute",
                     bottom: "calc(100% + 6px)",
-                    right: isMobile ? undefined : 0,
-                    left: isMobile ? 0 : undefined,
+                    right: 0,
                     zIndex: 100, background: "var(--bg)", border: "1px solid var(--border)",
                     borderRadius: 8, boxShadow: "0 -4px 16px rgba(0,0,0,0.10)",
-                    overflow: "hidden", minWidth: 120,
+                    overflow: "hidden", minWidth: 160,
+                    maxWidth: isMobile ? "min(280px, calc(100vw - 24px))" : undefined,
                   }}>
                     {TOOL_PRESETS.map((lvl) => {
                       const preset = TOOL_PRESET_MAP[lvl];
@@ -2705,23 +2706,25 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
                           key={lvl}
                           onClick={() => { setToolDropdownOpen(false); if (!isActive) onToolPresetChange(preset); }}
                           style={{
-                            display: "flex", alignItems: "center", gap: 8,
-                            width: "100%", padding: "7px 12px",
+                            display: "flex", alignItems: isMobile ? "flex-start" : "center", gap: 8,
+                            width: "100%", padding: isMobile ? "6px 10px" : "7px 12px",
                             background: isActive ? "var(--bg-selected)" : "none",
                             border: "none",
                             color: isActive ? "var(--text)" : "var(--text-muted)",
                             cursor: "pointer", fontSize: 12, textAlign: "left",
                             fontWeight: isActive ? 600 : 400,
-                            whiteSpace: "nowrap",
+                            whiteSpace: isMobile ? "normal" : "nowrap",
                           }}
                           onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = "var(--bg-hover)"; }}
                           onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = "none"; }}
                         >
                           {isActive
-                            ? <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><polyline points="1.5 5 4 7.5 8.5 2.5" /></svg>
+                            ? <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: isMobile ? 3 : 0 }}><polyline points="1.5 5 4 7.5 8.5 2.5" /></svg>
                             : <span style={{ width: 10, flexShrink: 0 }} />}
-                          <span style={{ flex: 1 }}>{lvl}</span>
-                          <span style={{ fontSize: 11, color: "var(--text-dim)", marginLeft: 8 }}>{desc}</span>
+                          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "flex-start" : "center", gap: isMobile ? 2 : 0 }}>
+                            <span style={{ flex: isMobile ? undefined : 1 }}>{lvl}</span>
+                            <span style={{ fontSize: 11, color: "var(--text-dim)", marginLeft: isMobile ? 0 : 8, overflowWrap: "anywhere", lineHeight: 1.3 }}>{desc}</span>
+                          </div>
                         </button>
                       );
                     })}

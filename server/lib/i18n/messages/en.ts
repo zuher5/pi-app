@@ -51,6 +51,8 @@ export const enLocale: LocalePlugin = {
     "settings.themeContrastLight": "High contrast light",
     "settings.themeContrastDark": "High contrast dark",
     "settings.themeZenburn": "Zenburn",
+    "settings.themeMocha": "Catppuccin Mocha",
+    "settings.themeLime": "Lime",
     "settings.themeSystem": "System",
     "settings.thinkingDisplay": "Thinking display",
     "settings.thinkingDisplayDescription": "Choose whether model reasoning blocks are expanded when messages load.",

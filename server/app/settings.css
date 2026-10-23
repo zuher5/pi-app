@@ -1605,12 +1605,11 @@
   margin: 6px 0 0;
 }
 
-/* Fifteen columns: System spans the first row; then five light themes and five dark ones
-   (three columns each), and a row of three wide tiles (five columns each). */
+/* Four proportional theme tiles in a 2x2 grid: System, Light, Mocha, Lime. Plain, clean aesthetic. */
 .settings-theme-options {
   display: grid;
-  grid-template-columns: repeat(15, minmax(0, 1fr));
-  grid-auto-rows: 40px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 44px;
   gap: 10px;
   max-width: 428px;
   padding: 4px;
@@ -1619,18 +1618,10 @@
 .settings-theme-option {
   position: relative;
   display: flex;
-  grid-column: span 3;
   min-width: 0;
+  height: 44px;
   border-radius: 9px;
   cursor: pointer;
-}
-
-.settings-theme-option[data-system] {
-  grid-column: 1 / -1;
-}
-
-.settings-theme-option[data-wide] {
-  grid-column: span 5;
 }
 
 .settings-theme-swatch {
@@ -1640,6 +1631,7 @@
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 9px;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .settings-theme-fill {
@@ -1660,24 +1652,16 @@
   justify-content: center;
   width: 100%;
   overflow: hidden;
-  color: var(--accent);
+  color: var(--text);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   white-space: nowrap;
-}
-
-/* "High contrast light" outgrows a third of the row on a phone: let the wide names take two lines. */
-.settings-theme-option[data-wide] .settings-theme-name {
-  font-size: 11px;
-  line-height: 1.2;
-  text-align: center;
-  white-space: normal;
 }
 
 .settings-theme-system {
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 6px;
   background: var(--bg-panel);
 }
 
@@ -1690,24 +1674,25 @@
 }
 
 .settings-theme-system-name {
-  margin-left: 6px;
   color: var(--text);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   white-space: nowrap;
 }
 
-.settings-theme-option:not(:has(input:checked)):hover {
-  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--border);
+/* Plain, quiet selection: clean neutral border without colored accent ring */
+.settings-theme-option:not(:has(input:checked)):hover .settings-theme-swatch {
+  border-color: var(--text-muted);
 }
 
-.settings-theme-option:has(input:checked) {
-  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+.settings-theme-option:has(input:checked) .settings-theme-swatch {
+  border-color: var(--text);
+  box-shadow: 0 0 0 1px var(--text);
 }
 
-.settings-theme-option:has(input:focus-visible) {
-  outline: 2px dashed var(--accent);
-  outline-offset: 6px;
+.settings-theme-option:has(input:focus-visible) .settings-theme-swatch {
+  outline: 2px dashed var(--text);
+  outline-offset: 3px;
 }
 
 .settings-font-rows {

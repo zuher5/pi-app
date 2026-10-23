@@ -2,10 +2,12 @@
 
 The [pi coding agent](https://github.com/earendil-works/pi) on your phone, in the phone's own browser. Pi runs on your PC (or on the phone itself via Termux); scan a QR and pi-web's UI opens on the phone, already signed in. No app to install.
 
-`server/` is a fork of [agegr/pi-web](https://github.com/agegr/pi-web) (MIT). **The UI, UX and every theme are exactly upstream pi-web's** — same layout, same theme picker (System, light palettes, dark palettes, high contrast, Zenburn), same components and CSS. Pi-App changes only what pairing needs:
+`server/` is a fork of [agegr/pi-web](https://github.com/agegr/pi-web) (MIT). Agent, sessions, files, git, terminal, models, MCP and skills behave as in pi-web. Pi-App adds:
 
 - the `pi-app` launcher, which prints a pairing QR;
 - browser pairing: the QR opens `/pair#t=<token>`, which trades the token for a sign-in cookie (90 days, revoked by rotating the token);
+- a minimal 2x2 theme picker with plain aesthetic tiles: System (auto), Light, Catppuccin Mocha (default), and Lime;
+- mobile composer fixes: tool presets ("configured") and thinking dropdowns stay within viewport boundaries;
 - one launcher command on Linux, macOS, Termux and Windows.
 
 The earlier Android app (Svelte + Capacitor) is kept on the `archive/svelte` branch and tag `v0.6.1`.
