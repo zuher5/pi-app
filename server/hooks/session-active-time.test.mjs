@@ -24,7 +24,9 @@ function setup({ snapshotActiveMs, liveActiveMs, liveSessionId = "a", sessionId 
     sessionIdRef: { current: sessionId },
     liveTotalActiveMs: liveActiveMs === undefined ? null : { sessionId: liveSessionId, value: liveActiveMs },
     data: { sessionId, filePath: "", totalActiveMs: snapshotActiveMs, stats: { tokens: { total: 1 } }, context: { messages: [] } },
-    mergeSessionStats: (fileStats) => ({ ...fileStats, tokens: { total: 1 } }),
+    // The message merge lives in its own useMemo (`mergedSessionStats`); this
+    // test exercises the active-time reading layered on top of it.
+    mergedSessionStats: { tokens: { total: 1 } },
   });
   return callback("sessionStats").runInContext(context)();
 }

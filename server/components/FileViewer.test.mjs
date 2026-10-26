@@ -4,7 +4,8 @@ import test from "node:test";
 import React from "react";
 import ts from "typescript";
 
-const source = await readFile(new URL("./FileViewer.tsx", import.meta.url), "utf8");
+// LF-normalized: the extraction below searches for ";\n", which a CRLF checkout never matches.
+const source = await readFile(new URL("./FileViewer.tsx", import.meta.url), "utf8").then((text) => text.replaceAll("\r\n", "\n"));
 
 test("lightweight source rows are skipped for highlighted, diff, and preview views", () => {
   // Execute the source-view calculations without mounting the file-fetching component.

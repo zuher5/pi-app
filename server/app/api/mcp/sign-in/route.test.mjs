@@ -46,7 +46,7 @@ after(async () => {
 const globalPath = join(agentDir, "mcp.json");
 const projectPath = join(cwd, ".pi", "mcp.json");
 const authPath = join(agentDir, "mcp-auth.json");
-const marker = join(root, "command-ran");
+const marker = join(root, "command-ran").replaceAll("\\", "/");
 const store = new ProjectTrustStore(agentDir);
 
 beforeEach(async () => {

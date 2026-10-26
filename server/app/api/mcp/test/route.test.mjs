@@ -40,7 +40,7 @@ after(async () => {
 const FIXTURE = fileURLToPath(new URL("../../../../lib/__fixtures__/mcp-env-server.mjs", import.meta.url));
 const globalPath = join(agentDir, "mcp.json");
 const projectPath = join(cwd, ".pi", "mcp.json");
-const marker = join(root, "command-ran");
+const marker = join(root, "command-ran").replaceAll("\\", "/");
 const envFile = join(root, "env-names.json");
 const store = new ProjectTrustStore(agentDir);
 const SECRET = "literal-header-secret-value";
@@ -94,6 +94,8 @@ test("a global server is tested from its file and answers with what it found", a
   const home = join(root, "home");
   await mkdir(home, { recursive: true });
   setEnvFor(t, "HOME", home);
+  // os.homedir() on Windows reads USERPROFILE, not HOME.
+  setEnvFor(t, "USERPROFILE", home);
   assert.equal(homedir(), home);
   const { status, body } = await post({ scope: "global", name: "lint" });
   assert.equal(status, 200);
