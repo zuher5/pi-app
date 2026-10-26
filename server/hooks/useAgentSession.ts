@@ -442,6 +442,28 @@ export function useAgentSession(opts: UseAgentSessionOptions) {
   // Moves on each time a released stream is opened again, so the release
   // effect arms its grace anew for a page still hidden.
   const [eventStreamReattachCount, setEventStreamReattachCount] = useState(0);
+  // Shown after a stream has been down long enough to notice: a reconnect that
+  // lands within the grace is invisible, one that keeps retrying is not.
+  const [eventStreamDown, setEventStreamDown] = useState(false);
+  const eventStreamDownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const markEventStreamStatus = useCallback((status: "connected" | "reconnecting") => {
+    if (eventStreamDownTimerRef.current !== null) {
+      clearTimeout(eventStreamDownTimerRef.current);
+      eventStreamDownTimerRef.current = null;
+    }
+    if (status === "connected") {
+      setEventStreamDown(false);
+      return;
+    }
+    eventStreamDownTimerRef.current = setTimeout(() => setEventStreamDown(true), 2_000);
+  }, []);
+  useEffect(() => () => {
+    if (eventStreamDownTimerRef.current !== null) clearTimeout(eventStreamDownTimerRef.current);
+  }, []);
+  // Switching sessions replaces the stream: the new one's readiness decides.
+  useEffect(() => {
+    markEventStreamStatus("connected");
+  }, [session?.id, markEventStreamStatus]);
   // The lease request in flight: the renewal tick and the release check share it.
   const leaseRequestRef = useRef<{ sid: string; promise: Promise<SessionLeaseOutcome> } | null>(null);
   const reattachEventStreamRef = useRef<(sid: string) => void>(() => {});
@@ -523,6 +545,7 @@ export function useAgentSession(opts: UseAgentSessionOptions) {
       readinessTimeoutMs: EVENT_STREAM_READY_TIMEOUT_MS,
       reconnectDelayMs: EVENT_STREAM_RECONNECT_DELAY_MS,
       staleAfterMs: EVENT_STREAM_STALE_MS,
+      onStatus: markEventStreamStatus,
       onUnexpectedError: (error) => {
         console.error("Failed to maintain the agent event stream:", error);
       },
@@ -630,6 +653,12 @@ export function useAgentSession(opts: UseAgentSessionOptions) {
   }, [opts.chatInputRef, session?.id, setEdit]);
   const cancelEdit = useCallback(() => setEdit(null), [setEdit]);
 
+  // The two full message passes of mergeSessionStats only depend on the message
+  // data; splitting it out keeps usage/active-time ticks from re-running them.
+  const mergedSessionStats = useMemo(
+    () => (sessionStatsOverride ? null : mergeSessionStats(data?.stats, data?.context.messages ?? [], messages)),
+    [sessionStatsOverride, data?.stats, data?.context.messages, messages],
+  );
   const sessionStats = useMemo(() => {
     // Active time is a monotone sum over the session's entries, so of the two
     // readings the larger one is the newer one: the live state leads while a run
@@ -651,17 +680,20 @@ export function useAgentSession(opts: UseAgentSessionOptions) {
       };
     }
     const fileStats = data?.stats;
-    const stats = mergeSessionStats(fileStats, data?.context.messages ?? [], messages);
-    if (stats.tokens.total === 0 && messages.length === 0 && !fileStats) return null;
-    return {
-      sessionFile: data?.filePath || undefined,
-      sessionId: sessionIdRef.current ?? session?.id ?? "",
-      sessionName: session?.name,
-      ...stats,
-      totalActiveMs,
-      ...(contextUsage ? { contextUsage } : {}),
-    } satisfies SessionStatsInfo;
-  }, [messages, sessionStatsOverride, contextUsage, liveTotalActiveMs, data?.sessionId, data?.context.messages, data?.filePath, data?.totalActiveMs, data?.stats, session?.id, session?.name]);
+    const stats = mergedSessionStats;
+    if (stats) {
+      if (stats.tokens.total === 0 && messages.length === 0 && !fileStats) return null;
+      return {
+        sessionFile: data?.filePath || undefined,
+        sessionId: sessionIdRef.current ?? session?.id ?? "",
+        sessionName: session?.name,
+        ...stats,
+        totalActiveMs,
+        ...(contextUsage ? { contextUsage } : {}),
+      } satisfies SessionStatsInfo;
+    }
+    return null;
+  }, [mergedSessionStats, sessionStatsOverride, contextUsage, liveTotalActiveMs, data?.sessionId, data?.filePath, data?.totalActiveMs, data?.stats, session?.id, session?.name, messages.length]);
 
   const applyLiveUsage = useCallback((state: AgentStateResponse | undefined, sid: string, runId: number, requestId: number) => {
     if (!sessionHookMountedRef.current || sessionIdRef.current !== sid
@@ -1741,12 +1773,15 @@ export function useAgentSession(opts: UseAgentSessionOptions) {
             return next;
           });
         }
-        const progress = name === CODEMODE_TOOL_NAME
-          ? getCodemodeProgress(event.partialResult)
-          : getToolExecutionProgress(event.partialResult);
         setAgentPhase((prev) => {
+          const existing = prev?.kind === "running_tools" ? prev.tools.find((tool) => tool.id === id) : undefined;
+          const progress = name === CODEMODE_TOOL_NAME
+            ? getCodemodeProgress(event.partialResult)
+            : getToolExecutionProgress(event.partialResult);
+          // Bail out when nothing changed: a fresh object per update would
+          // re-render the whole transcript even for identical progress.
+          if (existing && (name || existing.name) === existing.name && progress === existing.progress) return prev;
           const tools = prev?.kind === "running_tools" ? [...prev.tools] : [];
-          const existing = tools.find((tool) => tool.id === id);
           const updated = {
             id,
             name: name || existing?.name || "tool",
@@ -2933,6 +2968,7 @@ export function useAgentSession(opts: UseAgentSessionOptions) {
     editEntryId,
     promptAnchorActive,
     showScrollToBottom,
+    eventStreamDown,
     // Refs
     sessionIdRef, scrollContainerRef,
     lastUserMsgRef, pendingScrollToUserRef, initialScrollDoneRef,

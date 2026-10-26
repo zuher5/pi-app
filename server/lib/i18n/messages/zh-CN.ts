@@ -486,6 +486,7 @@ export const zhCNLocale: LocalePlugin = {
     "files.uploading": "正在上传，{progress}%",
     "files.dropToUpload": "松开鼠标，上传到 {directory}",
     "chat.loadingSession": "正在加载会话...",
+    "chat.reconnecting": "正在重新连接...",
     "chat.runningTool": "正在运行工具...",
     "chat.generatingToolInput": "正在生成参数...",
     "chat.truncatedByOutputLimit": "回复因达到模型输出长度上限而被截断。发送一条后续消息以继续。",

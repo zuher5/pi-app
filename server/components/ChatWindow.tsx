@@ -291,6 +291,7 @@ export function ChatWindow({ session, searchTarget, onSearchTargetHandled, initi
     isNew,
     editEntryId,
     showScrollToBottom,
+    eventStreamDown,
     sessionIdRef, scrollContainerRef,
     lastUserMsgRef, promptAnchorActive,
     handleSend, handleAbort, handleFork, handleEditContent, cancelEdit, handleModelChange,
@@ -1074,6 +1075,46 @@ export function ChatWindow({ session, searchTarget, onSearchTargetHandled, initi
       >
         <NoticeShelf notices={notices} floating onPauseChange={setNoticePaused} />
       </div>
+
+      {/* A dropped stream reconnects on its own; say so while it retries so a
+          frozen reply reads as a reconnect rather than a hung app. */}
+      {eventStreamDown && (
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            position: "absolute",
+            top: 12,
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 41,
+            display: "flex",
+            alignItems: "center",
+            gap: 7,
+            padding: "5px 12px",
+            borderRadius: 999,
+            border: "1px solid var(--border)",
+            background: "var(--bg)",
+            color: "var(--text-muted)",
+            fontSize: 12,
+            boxShadow: "0 2px 10px rgba(0,0,0,0.18)",
+            pointerEvents: "none",
+            whiteSpace: "nowrap",
+          }}
+        >
+          <span
+            aria-hidden
+            className="animate-pulse"
+            style={{
+              width: 7,
+              height: 7,
+              borderRadius: "50%",
+              background: "#f59e0b",
+            }}
+          />
+          {t("chat.reconnecting")}
+        </div>
+      )}
 
       <div className="relative flex min-h-0 min-w-0 flex-1 overflow-hidden">
         {extensionDialog && (

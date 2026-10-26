@@ -748,10 +748,12 @@ function AssistantMessageView({
     return map;
   }, [toolResults, message.timestamp]);
 
-  const textContent = blocks
-    .filter((b): b is TextContent => b.type === "text")
-    .map((b) => b.text)
-    .join("\n");
+  // Joined only when the blocks actually change: while streaming this re-runs
+  // per delta and joining the whole reply each time is quadratic.
+  const textContent = useMemo(
+    () => blocks.filter((b): b is TextContent => b.type === "text").map((b) => b.text).join("\n"),
+    [blocks],
+  );
 
   const copyContent = () => {
     copyText(textContent).then(() => {
@@ -1049,7 +1051,9 @@ export function ThinkingBlock({ block, duration, sessionId, entryId, blockIndex 
   }
   const tRef = useRef(t);
   tRef.current = t;
-  const preview = getThinkingPreview(block.thinking);
+  // Memoized: a streaming thinking block re-renders per delta, and the preview
+  // render below mounts a full remark pipeline each time otherwise.
+  const preview = useMemo(() => getThinkingPreview(block.thinking), [block.thinking]);
 
   // Keep already-mounted blocks in sync when the preference changes.
   useEffect(() => {
@@ -1175,7 +1179,9 @@ export function formatToolDuration(ms: number): string {
   return `${Math.floor(minutes / 60)}h ${minutes % 60}m ${remainder}s`;
 }
 
-function ToolCallBlock({ block, result, duration, onOpenSubagent }: { block: ToolCallContent; result?: ToolResultMessage; duration?: number; onOpenSubagent?: (sessionId: string, label: string) => void }) {
+// Memoized: during streaming the parent re-renders per delta and re-runs every
+// tool card; the memo lets finished cards skip their re-derivation entirely.
+const ToolCallBlock = memo(function ToolCallBlock({ block, result, duration, onOpenSubagent }: { block: ToolCallContent; result?: ToolResultMessage; duration?: number; onOpenSubagent?: (sessionId: string, label: string) => void }) {
   const { t } = useI18n();
   const [expanded, setExpanded] = useState(() => isToolCallExpanded(block.toolCallId));
   const toggleExpanded = () => {
@@ -1183,19 +1189,22 @@ function ToolCallBlock({ block, result, duration, onOpenSubagent }: { block: Too
     setToolCallExpanded(block.toolCallId, next);
     setExpanded(next);
   };
-  const writtenFileText = getWrittenFileText(block);
+  const writtenFileText = useMemo(() => getWrittenFileText(block), [block]);
   const inputStr = writtenFileText ?? getToolCallInputText(block);
   const isStreamingInput = block.rawInput !== undefined;
   const isEditTool = isEditToolName(block.toolName);
-  const resultDiff = result && !result.isError ? getResultDiff(result) : null;
-  const patchFiles = getApplyPatchFiles(block, result);
-  const patchLabel = isApplyPatchToolName(block.toolName)
-    ? summarizeApplyPatchInput(block)
-    : null;
+  const resultDiff = useMemo(() => (result && !result.isError ? getResultDiff(result) : null), [result]);
+  const patchFiles = useMemo(() => getApplyPatchFiles(block, result), [block, result]);
+  const patchLabel = useMemo(
+    () => (isApplyPatchToolName(block.toolName) ? summarizeApplyPatchInput(block) : null),
+    [block],
+  );
   // A script and the calls it made, instead of the input JSON. Streamed input is
   // still incomplete JSON and keeps the generic view.
-  const codemodeCode = block.toolName === CODEMODE_TOOL_NAME && !isStreamingInput ? codemodeScript(block.input) : null;
-  const codemode = codemodeCode === null ? null : { code: codemodeCode, ...codemodeCalls(result?.details) };
+  const codemode = useMemo(() => {
+    const codemodeCode = block.toolName === CODEMODE_TOOL_NAME && !isStreamingInput ? codemodeScript(block.input) : null;
+    return codemodeCode === null ? null : { code: codemodeCode, ...codemodeCalls(result?.details) };
+  }, [block, isStreamingInput, result]);
   // A running script's progress snapshot has calls but no content yet.
   const codemodeRunning = codemode !== null && result !== undefined && result.content.length === 0;
 
@@ -1210,10 +1219,16 @@ function ToolCallBlock({ block, result, duration, onOpenSubagent }: { block: Too
   const mcpLabel = mcpToolLabel(block.toolName, result?.details);
 
   // Result display
-  const resultContent = result ? (codemode ? stripCodemodeHeader(result.content) : result.content) : [];
-  const joinedResultText = result
-    ? resultContent.filter((b): b is { type: "text"; text: string } => b.type === "text").map((b) => b.text).join("\n")
-    : null;
+  const resultContent = useMemo(
+    () => (result ? (codemode ? stripCodemodeHeader(result.content) : result.content) : []),
+    [result, codemode],
+  );
+  const joinedResultText = useMemo(
+    () => (result
+      ? resultContent.filter((b): b is { type: "text"; text: string } => b.type === "text").map((b) => b.text).join("\n")
+      : null),
+    [result, resultContent],
+  );
   const resultText = mcpLabel && joinedResultText !== null ? prettyMcpResultText(joinedResultText) : joinedResultText;
   const resultImages = getMessageImages(resultContent);
   const resultIsEmpty = resultText === null ? false : (resultText.trim() === "(no output)" || resultText.trim() === "");
@@ -1362,7 +1377,7 @@ function ToolCallBlock({ block, result, duration, onOpenSubagent }: { block: Too
       )}
     </div>
   );
-}
+});
 
 interface ResultDiff {
   text: string;

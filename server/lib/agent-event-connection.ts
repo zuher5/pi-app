@@ -46,6 +46,11 @@ export interface AgentEventConnectionOptions {
    */
   staleAfterMs?: number;
   onUnexpectedError?(error: unknown): void;
+  /**
+   * "reconnecting" once a retry is scheduled, "connected" when a ready stream
+   * reports back. A page shows its own reconnect notice from this.
+   */
+  onStatus?(status: "connected" | "reconnecting"): void;
 }
 
 const EVENT_SOURCE_OPEN = 1;
@@ -159,6 +164,7 @@ export class AgentEventConnection {
         attempt.ready = true;
         attempt.succeed();
         this.stopRetrying();
+        this.options.onStatus?.("connected");
         const staleAfterMs = this.options.staleAfterMs;
         if (staleAfterMs && connection.watchdog === null) {
           // Checked against the clock, so a background tab's throttled timer
@@ -202,6 +208,7 @@ export class AgentEventConnection {
     if (!this.options.shouldMaintain(sessionId)) return;
     if (this.retry?.sessionId === sessionId) return;
     this.clearRetry();
+    this.options.onStatus?.("reconnecting");
 
     const timer = setTimeout(() => {
       if (this.retry?.timer !== timer) return;

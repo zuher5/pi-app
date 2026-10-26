@@ -486,6 +486,7 @@ export const enLocale: LocalePlugin = {
     "files.uploading": "Uploading, {progress}%",
     "files.dropToUpload": "Release to upload to {directory}",
     "chat.loadingSession": "Loading session...",
+    "chat.reconnecting": "Reconnecting...",
     "chat.runningTool": "Running tool...",
     "chat.generatingToolInput": "Generating parameters...",
     "chat.truncatedByOutputLimit": "This response was cut off after reaching the model’s output limit. Send a follow-up to continue.",
